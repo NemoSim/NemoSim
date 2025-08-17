@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NetworkConfig type="BIUNetwork">
+	<BIUNetwork>
+        <VTh>0.9</VTh>
+		<refractory>14</refractory>
+	</BIUNetwork>
+    <Architecture>
+        <Layer size="1">
+			<synapses rows="1" cols="1">
+				<weights>
+					<row>7.0</row>
+				</weights>
+			</synapses>
+		</Layer>
+    </Architecture>
+</NetworkConfig>

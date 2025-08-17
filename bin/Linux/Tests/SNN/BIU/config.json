@@ -1,0 +1,7 @@
+{
+    "output_directory": "./Tests/SNN/BIU/",
+    "xml_config_path": "./Tests/SNN/BIU/test.xml",
+	"sup_xml_config_path": "./Tests/SNN/BIU/supervisor.xml",
+    "data_input_file": "./Tests/SNN/BIU/input.txt",
+	"progress_interval_seconds": 2
+}
