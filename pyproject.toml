@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nemosim-biu-builder"
+version = "0.1.0"
+description = "Python interface to generate BIU XML/JSON/TXT and run NEMOSIM"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Avi Haznum", email = "avihaznum@gmail.com" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/you/nemosim-biu-builder"
+Issues = "https://github.com/you/nemosim-biu-builder/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nemosim_biu_builder"]
+
+# Optional: expose a CLI that generates files & runs NEMOSIM
+[project.scripts]
+nemosim-biu = "nemosim_biu_builder.biu_builder:main"
+
