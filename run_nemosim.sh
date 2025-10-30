@@ -31,8 +31,15 @@ arg="${1:-}" || true
 CONFIG_ABS=""
 CONFIG_PATH_REL="$DEFAULT_CONFIG_REL"
 if [[ -n "$arg" ]]; then
-    # If a directory is provided, assume it contains config.json
-    if [[ -d "$PROJECT_ROOT/$arg" ]]; then
+    # If a directory is provided (absolute or project-relative), assume it contains config.json
+    if [[ -d "$arg" ]]; then
+        if [[ -f "$arg/config.json" ]]; then
+            CONFIG_ABS="$(cd "$arg" && pwd)/config.json"
+        else
+            echo "Error: '$arg' does not contain a config.json" >&2
+            exit 1
+        fi
+    elif [[ -d "$PROJECT_ROOT/$arg" ]]; then
         if [[ -f "$PROJECT_ROOT/$arg/config.json" ]]; then
             CONFIG_ABS="$(cd "$PROJECT_ROOT/$arg" && pwd)/config.json"
         else
@@ -40,8 +47,7 @@ if [[ -n "$arg" ]]; then
             exit 1
         fi
     else
-        # Treat as a file path
-        # Accept absolute or project-root-relative paths
+        # Treat as a file path (absolute or project-root-relative)
         if [[ -f "$arg" ]]; then
             CONFIG_ABS="$(cd "$(dirname "$arg")" && pwd)/$(basename "$arg")"
         elif [[ -f "$PROJECT_ROOT/$arg" ]]; then

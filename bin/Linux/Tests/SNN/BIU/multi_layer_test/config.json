@@ -1,0 +1,10 @@
+{
+  "output_directory": "./Tests/SNN/BIU/multi_layer_test/output",
+  "xml_config_path": "./Tests/SNN/BIU/multi_layer_test/test.xml",
+  "sup_xml_config_path": "./Tests/SNN/BIU/supervisor.xml",
+  "data_input_file": "./Tests/SNN/BIU/input.txt",
+  "synapses_energy_table_path": "./Tests/SNN/BIU/Spike-in_vs_Not_spike-in.csv",
+  "neuron_energy_table_path": "./Tests/SNN/BIU/Energy_Neuron_CSV_Content.csv",
+  "progress_interval_seconds": 2
+}
+
