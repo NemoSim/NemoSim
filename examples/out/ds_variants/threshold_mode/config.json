@@ -1,5 +1,5 @@
 {
-  "output_directory": "examples/out/ds_variants/threshold_mode/output",
-  "xml_config_path": "examples/out/ds_variants/threshold_mode/biu.xml",
-  "data_input_file": "tests/data/multi_layer_test/input.txt"
+  "output_directory": "/home/avi/projects/NemoSim/examples/out/ds_variants/threshold_mode/output",
+  "xml_config_path": "/home/avi/projects/NemoSim/examples/out/ds_variants/threshold_mode/biu.xml",
+  "data_input_file": "/home/avi/projects/NemoSim/tests/data/multi_layer_test/input.txt"
 }

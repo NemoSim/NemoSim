@@ -51,7 +51,7 @@ def test_precedence_and_validation(tmp_path: Path):
     assert lyr.find("Neuron[@index='1']") is not None
 
 
-def test_build_run_config_relativize(tmp_path: Path):
+def test_build_run_config_absolute_paths(tmp_path: Path):
     base = tmp_path / "bin" / "Linux"
     base.mkdir(parents=True)
     out_dir = tmp_path / "scenario"
@@ -67,11 +67,10 @@ def test_build_run_config_relativize(tmp_path: Path):
         xml_config_path=xml,
         data_input_file=data,
         sup_xml_config_path=None,
-        relativize_from=base,
     )
-    # All values should be strings relative to base
-    assert cfg["xml_config_path"].startswith("../../")
-    assert cfg["output_directory"].startswith("../../")
-    assert cfg["data_input_file"].startswith("../") or cfg["data_input_file"].startswith("../../")
+    # All values should be absolute paths
+    assert cfg["xml_config_path"].startswith("/")
+    assert cfg["output_directory"].startswith("/")
+    assert cfg["data_input_file"].startswith("/")
 
 

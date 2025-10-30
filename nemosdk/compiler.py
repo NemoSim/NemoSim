@@ -139,7 +139,6 @@ def compile(
     data_input_file: Optional[Path] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
-    relativize_from: Optional[Path] = None,
 ) -> Union[tuple[str, Optional[str]], "CompiledModel"]:
     """Compile a BIU model.
 
@@ -174,7 +173,6 @@ def compile(
         sup_xml_config_path=sup_xml_path,
         synapses_energy_table_path=synapses_energy_table_path,
         neuron_energy_table_path=neuron_energy_table_path,
-        relativize_from=relativize_from,
     )
     cfg_path = out_dir / "config.json"
     write_json(cfg_path, cfg)
@@ -202,31 +200,24 @@ def build_run_config(
     sup_xml_config_path: Optional[Path] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
-    relativize_from: Optional[Path] = None,
 ) -> dict:
-    """Construct a NemoSim run config.json dict matching repo examples.
-
-    If relativize_from is provided, all paths are converted to relative paths from that
-    directory (matching simulator working directory conventions).
-    """
-    def to_rel(p: Optional[Path]) -> Optional[str]:
+    """Construct a NemoSim run config.json dict with absolute paths."""
+    def to_abs(p: Optional[Path]) -> Optional[str]:
         if p is None:
             return None
-        if relativize_from is None:
-            return str(p)
-        return str(Path(os_path_relativize(p, relativize_from)))
+        return str(p.resolve())
 
     cfg: dict[str, str] = {
-        "output_directory": to_rel(output_directory) or "",
-        "xml_config_path": to_rel(xml_config_path) or "",
-        "data_input_file": to_rel(data_input_file) or "",
+        "output_directory": to_abs(output_directory) or "",
+        "xml_config_path": to_abs(xml_config_path) or "",
+        "data_input_file": to_abs(data_input_file) or "",
     }
     if sup_xml_config_path is not None:
-        cfg["sup_xml_config_path"] = to_rel(sup_xml_config_path) or ""
+        cfg["sup_xml_config_path"] = to_abs(sup_xml_config_path) or ""
     if synapses_energy_table_path is not None:
-        cfg["synapses_energy_table_path"] = to_rel(synapses_energy_table_path) or ""
+        cfg["synapses_energy_table_path"] = to_abs(synapses_energy_table_path) or ""
     if neuron_energy_table_path is not None:
-        cfg["neuron_energy_table_path"] = to_rel(neuron_energy_table_path) or ""
+        cfg["neuron_energy_table_path"] = to_abs(neuron_energy_table_path) or ""
     return cfg
 
 
@@ -241,14 +232,8 @@ def write_json(path: Path, data: dict) -> None:
 
 
 def os_path_relativize(p: Path, base: Path) -> Path:
-    # Produce a relative path from base to p, even if it requires ".." segments
-    p_abs = p if p.is_absolute() else (base / p).resolve()
-    try:
-        return Path(str(p_abs.resolve())).relative_to(base.resolve())
-    except Exception:
-        # Fallback to relpath semantics
-        import os as _os
-        return Path(_os.path.relpath(str(p_abs), str(base.resolve())))
+    # Deprecated in favor of absolute paths
+    return p
 
 
 def compile_and_write(
@@ -261,7 +246,6 @@ def compile_and_write(
     supervisor_defaults: Optional[BIUNetworkDefaults] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
-    relativize_from: Optional[Path] = None,
 ) -> dict:
     """Convenience helper: compile and write artifacts (BIU XML, optional supervisor, config.json).
 
@@ -287,7 +271,6 @@ def compile_and_write(
         sup_xml_config_path=sup_xml_path,
         synapses_energy_table_path=synapses_energy_table_path,
         neuron_energy_table_path=neuron_energy_table_path,
-        relativize_from=relativize_from,
     )
     write_json(out_dir / "config.json", cfg)
     return cfg

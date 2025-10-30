@@ -19,8 +19,7 @@ def build_one(out_dir: Path, sim_workdir: Path, defaults: BIUNetworkDefaults, na
         defaults=defaults,
         layers=layers,
         out_dir=out_dir / name,
-        data_input_file=Path("tests/data/multi_layer_test/input.txt"),
-        relativize_from=sim_workdir,
+        data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
     )
     if run:
         runner = NemoSimRunner(working_dir=sim_workdir)

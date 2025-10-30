@@ -21,8 +21,7 @@ def main() -> int:
         defaults=defaults,
         layers=layers,
         out_dir=out_dir,
-        data_input_file=Path("tests/data/multi_layer_test/input.txt"),
-        relativize_from=sim_workdir,
+        data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
     )
     runner = NemoSimRunner(working_dir=sim_workdir)
     res = runner.run(cfg_path, check=True)

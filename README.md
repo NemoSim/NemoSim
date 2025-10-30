@@ -79,8 +79,7 @@ cfg_path = compile_model(
     defaults=defaults,
     layers=layers,
     out_dir=out,
-    data_input_file=Path("tests/data/multi_layer_test/input.txt"),
-    relativize_from=Path("bin/Linux"),
+    data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
 )
 
 from nemosdk.runner import NemoSimRunner
