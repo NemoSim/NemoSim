@@ -12,10 +12,10 @@ This directory contains runnable examples demonstrating common tasks:
 From repo root:
 
 ```bash
-python examples/build_minimal.py --run              # builds and runs
-python examples/build_multilayer_precedence.py --run
-python examples/build_ds_variants.py --run
-python examples/build_with_energy_tables.py --run
+python examples/build_minimal.py                    # builds and runs
+python examples/build_multilayer_precedence.py
+python examples/build_ds_variants.py
+python examples/build_with_energy_tables.py
 
 # Or run all
 bash examples/run_all.sh
@@ -23,11 +23,10 @@ bash examples/run_all.sh
 
 Artifacts are written under `examples/out/<scenario>/`:
 - `biu.xml` (+ optional `supervisor.xml`)
-- `config.json` (paths relative to `bin/Linux`)
+- `config.json` (uses absolute paths)
 - `output/` (created by NemoSim when `--run` is used)
 
 Notes:
-- NemoSim resolves relative paths from `bin/Linux`. These examples set `relativize_from='bin/Linux'` so they work with the repo’s simulator layout.
-- `--run` requires `bin/Linux/NEMOSIM` to exist and be executable.
+- NemoSim runs from `bin/Linux`; ensure `bin/Linux/NEMOSIM` exists and is executable.
 
 

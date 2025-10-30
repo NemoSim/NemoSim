@@ -105,3 +105,48 @@ Artifacts are written under `examples/out/...` and paths are relativized to `bin
 - [🧭 Path resolution](#-path-resolution)
 - [🚀 Examples (no arguments required)](#-examples-no-arguments-required)
 - [📚 More documentation](#-more-documentation)
+
+### 🔧 Environment & Installation
+
+- Supported: Python ≥ 3.10; Linux (tested)
+- Install with uv:
+  - `curl -Ls https://astral.sh/uv/install.sh | sh`
+  - `uv venv .venv`
+  - `uv pip install -e .`
+- Or with pip:
+  - `python3 -m pip install -e .`
+
+### 🧪 Testing & Development
+
+- Run SDK tests: `uv run -q pytest -q tests_sdk` (or `python3 -m pytest -q tests_sdk`)
+- Code style: fully typed public API; prefer small, cohesive modules
+
+### 🏃 Simulator Expectations
+
+- Binary must exist at `bin/Linux/NEMOSIM`
+- Use `NemoSimRunner(working_dir=Path("bin/Linux"))`
+- Logs are captured under `bin/Linux/logs`
+
+### 📁 Paths Policy
+
+- All paths in the generated `config.json` are absolute
+- Pass `data_input_file` as an absolute path
+
+### 🧰 Two‑Line Flow Recap
+
+1) `compiled = compile(defaults, layers, out_dir=..., data_input_file=...)`
+2) `NemoSimRunner(working_dir=Path("bin/Linux")).run(compiled)`
+
+### 🛠️ Troubleshooting
+
+- Missing or non‑executable simulator: `chmod +x bin/Linux/NEMOSIM`
+- Non‑zero exit: check the latest logs in `bin/Linux/logs`
+- DS constraints: ensure `DSBitWidth ∈ {4,8}` and `DSClockMHz > 0`
+
+### 🌐 Project Site
+
+- Background and objectives: `https://nemo.org.il/`
+
+### 🤝 Contributing
+
+- PRs welcome (typed APIs, tests, docs). License: MIT
