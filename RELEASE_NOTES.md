@@ -1,5 +1,31 @@
 ## NemoSim / NemoSDK Release Notes
 
+### v0.1.1 (Alpha) — 2025-10-30
+
+Status: Alpha. Developer‑experience updates; no breaking runtime changes expected.
+
+#### Changed
+- Consolidated tests under a single `tests/` folder:
+  - SDK tests moved to `tests/sdk/` (removed `tests_sdk/`)
+  - Simulator tests moved to `tests/sim/` with unchanged data under `tests/data/`
+  - Updated scripts: `tests/run_tests_sdk.sh` and `tests/run_tests.sh`
+- Documentation refresh:
+  - `docs/BIUNetwork_Configuration.md` rewritten to be SDK‑only with parameter examples
+  - Added `bin/Linux/README.md` describing the exact expected XML structure
+- Code comments & CLI polish:
+  - Added docstrings across `nemosdk/model.py`, `compiler.py`, `runner.py`, `cli.py`
+  - Minor CLI fix to use `CompiledModel` when running
+
+#### Removed / Repo Hygiene
+- Removed DS lookup tables from VCS and added ignores:
+  - Deleted `bin/Linux/DS_0`–`DS_7`; added to `.gitignore` (also covers `bin/Linux/DS_tables/`)
+  - All simulator tests still pass without these files present in the repo
+- Ignored simulator logs: added `bin/Linux/logs/` to `.gitignore` and cleaned existing logs
+
+#### Notes
+- No public SDK API changes; compile→run flows and examples are unaffected.
+- If your deployment requires DS tables, ensure they are provided at runtime alongside `NEMOSIM`.
+
 ### v0.1.0 (Alpha) — 2025-10-30
 
 Status: Alpha. Linux-only. Public APIs may change.
