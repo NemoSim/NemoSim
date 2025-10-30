@@ -193,7 +193,13 @@ def write_json(path: Path, data: dict) -> None:
 
 
 def os_path_relativize(p: Path, base: Path) -> Path:
-    # Avoid importing os.path at module import time; trivial wrapper
-    return Path(str(p.resolve())).relative_to(base.resolve()) if p.is_absolute() else Path(p)
+    # Produce a relative path from base to p, even if it requires ".." segments
+    p_abs = p if p.is_absolute() else (base / p).resolve()
+    try:
+        return Path(str(p_abs.resolve())).relative_to(base.resolve())
+    except Exception:
+        # Fallback to relpath semantics
+        import os as _os
+        return Path(_os.path.relpath(str(p_abs), str(base.resolve())))
 
 

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Lightweight SDK to define, compile, and run BIU networks for NemoSim"
 readme = "README_SDK.md"
 requires-python = ">=3.10"
-authors = [{ name = "Avi", email = "" }]
+authors = [{ name = "Avi", email = "hazannum@post.bgu.ac.il" }]
 license = { text = "MIT" }
 dependencies = []
 

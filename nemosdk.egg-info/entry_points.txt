@@ -1,0 +1,2 @@
+[console_scripts]
+nemosdk = nemosdk.cli:main
