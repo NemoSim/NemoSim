@@ -5,3 +5,7 @@
 .DS_Store
 *.swp
 *.swo
+ 
+# Ignore DS lookup tables (moved out of repo)
+/bin/Linux/DS_[0-7]
+/bin/Linux/DS_tables/DS_[0-7]
