@@ -1,6 +1,0 @@
-{
-    "output_directory": "/home/avi/projects/NemoSim/Tests/SNN/BIU/example_run",
-    "xml_config_path": "/home/avi/projects/NemoSim/Tests/SNN/BIU/example_run/test.xml",
-    "data_input_file": "/home/avi/projects/NemoSim/Tests/SNN/BIU/example_run/input.txt",
-    "progress_interval_seconds": 2
-}

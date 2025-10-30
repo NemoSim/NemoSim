@@ -1,6 +1,0 @@
-{
-    "output_directory": "./Tests/SNN/LIF/step_current_test/",
-    "xml_config_path": "./Tests/SNN/LIF/step_current_test/testFull.xml",
-    "data_input_file": "./Tests/SNN/LIF/step_current_test/input.txt",
-	"progress_interval_seconds": 2
-}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NetworkConfig type="BIUNetwork">
+	<BIUNetwork>
+        <VTh>0.9</VTh>
+		<refractory>14</refractory>
+	</BIUNetwork>
+    <Architecture>
+        <Layer size="4">
+			<synapses rows="4" cols="16">
+				<weights>
+					<row>7.0 7.0 8.0 7.0 7.0 7.0 7.0 7.3 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 </row>
+					<row>7.0 7.0 7.0 7.0 7.1 7.0 7.0 7.0 7.0 7.0 7.0 1.0 5.0 7.0 7.0 7.0 </row>
+					<row>7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 </row>
+					<row>7.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 2.0 7.0 7.0 7.0 7.0 7.0 7.0 7.0 </row>
+				</weights>
+			</synapses>
+		</Layer>
+		<Layer size="2">
+			<synapses rows="2" cols="4">
+				<weights>
+					<row>5.5 5.0 8.0 5.0 </row>
+					<row>5.0 5.0 5.0 5.0 </row>
+					<row>5.0 3.0 5.0 5.0 </row>
+					<row>5.0 5.1 5.0 5.0 </row>
+				</weights>
+			</synapses>
+		</Layer>
+    </Architecture>
+</NetworkConfig>
