@@ -1,5 +1,18 @@
 ## BIUNetwork configuration guide (NemoSim)
 
+### Quick start
+
+Run a sample network and the test suite:
+
+```bash
+# From repo root
+./scripts/run_nemosim.sh tests/data/multi_layer_test/config.json
+
+# Run all Python tests
+cd tests
+./run_tests.sh
+```
+
 This guide explains how to configure a BIU spiking network and per‑neuron parameters using the XML schema used by NemoSim. All examples and parameter descriptions are derived from the files in this repository.
 
 ### Relevant examples in this repo
@@ -40,6 +53,21 @@ The following parameters define global defaults for the whole network. They can 
 - `DSBitWidth` (int, 4 or 8): Downstream (DS) bit width for digital interface.
 - `DSClockMHz` (double): DS clock in MHz. Must be positive.
 - `DSMode` (string): `ThresholdMode` or `FrequencyMode`. If missing or empty, defaults to `ThresholdMode` (informational warning).
+
+#### Parameter reference
+
+| Name           | Type    | Units | Description |
+|----------------|---------|-------|-------------|
+| `VTh`          | double  | V     | Neuron threshold voltage (default). |
+| `RLeak`        | double  | Ω     | Neuron leak resistance (default). |
+| `refractory`   | int     | steps | Refractory period in simulation steps (default). |
+| `VDD`          | double  | V     | Supply voltage for analog/energy models. |
+| `Cn`           | double  | F     | Neuron capacitance. |
+| `Cu`           | double  | F     | Synapse/aux capacitance used by the model. |
+| `fclk`         | double  | Hz    | Global clock frequency used in some flows. |
+| `DSBitWidth`   | int     | bits  | DS interface width; valid: 4 or 8. |
+| `DSClockMHz`   | double  | MHz   | DS interface clock; must be positive. |
+| `DSMode`       | string  | —     | `ThresholdMode` (default) or `FrequencyMode`. |
 
 Notes from release notes (`docs/WhatsNew.txt`):
 - If `DSMode` is missing/empty → default `ThresholdMode` is applied with an info/warning.
