@@ -2,11 +2,9 @@
 
 set -euo pipefail
 
-# Run NEMOSIM from the project root while executing the binary in bin/Linux so
-# that relative paths inside test config.json files resolve correctly.
-
+# Resolve repo root as parent of this script's directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN_DIR="$PROJECT_ROOT/bin/Linux"
 DEFAULT_CONFIG_REL="./Tests/SNN/BIU/config.json"
 

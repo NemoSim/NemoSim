@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = PROJECT_ROOT / "run_nemosim.sh"
+SCRIPT = PROJECT_ROOT / "scripts" / "run_nemosim.sh"
 BIU_DIR = PROJECT_ROOT / "bin" / "Linux" / "Tests" / "SNN" / "BIU"
 BIU_CONFIG = BIU_DIR / "config.json"
 
@@ -30,6 +30,19 @@ ROOT_PRECEDENCE_OUTPUT = ROOT_PRECEDENCE_DIR / "output"
 ROOT_ML_OVERRIDES_DIR = PROJECT_ROOT / "tests" / "data" / "multi_layer_overrides_test"
 ROOT_ML_OVERRIDES_CONFIG = ROOT_ML_OVERRIDES_DIR / "config.json"
 ROOT_ML_OVERRIDES_OUTPUT = ROOT_ML_OVERRIDES_DIR / "output"
+
+# Expected pinned totals per scenario
+EXPECTED = {
+    "default": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
+    "biu_dir": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
+    "biu_config": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
+    "root_multi": ("3.58167e+07 fJ", "4.00494e+08 fJ"),
+    "root_precedence": ("4.74923e+06 fJ", "3.8236e+09 fJ"),
+    "root_ml_overrides": ("1.28865e+07 fJ", "6.57939e+09 fJ"),
+    # Optional: BIU-dir variants (should match root equivalents if inputs same)
+    "biu_multi": ("3.58167e+07 fJ", "4.00494e+08 fJ"),
+    "biu_precedence": ("4.74923e+06 fJ", "3.8236e+09 fJ"),
+}
 
 
 def run_and_capture(args):
@@ -58,6 +71,23 @@ def extract_totals(output: str):
     return total_syn, total_neu
 
 
+def assert_output_sanity(testcase: unittest.TestCase, output_dir: Path):
+    # Basic sanity: at least one of each expected file type exists and is non-empty
+    spikes = sorted(output_dir.glob("spikes_*.txt"))
+    vin = sorted(output_dir.glob("vin_*.txt"))
+    vns = sorted(output_dir.glob("vns_*.txt"))
+    testcase.assertGreaterEqual(len(spikes), 1, f"No spikes_*.txt in {output_dir}")
+    testcase.assertGreaterEqual(len(vin), 1, f"No vin_*.txt in {output_dir}")
+    testcase.assertGreaterEqual(len(vns), 1, f"No vns_*.txt in {output_dir}")
+    # Non-empty and minimum line counts (>= 10 lines) as a rough sanity
+    for f in [spikes[0], vin[0], vns[0]]:
+        size = f.stat().st_size
+        testcase.assertGreater(size, 0, f"Empty output file: {f}")
+        with f.open("r") as fh:
+            cnt = sum(1 for _ in fh)
+        testcase.assertGreaterEqual(cnt, 10, f"Too few lines in {f}: {cnt}")
+
+
 class TestNemoSimRunner(unittest.TestCase):
     def setUp(self):
         self.assertTrue(SCRIPT.exists(), f"Missing script: {SCRIPT}")
@@ -65,84 +95,45 @@ class TestNemoSimRunner(unittest.TestCase):
         self.assertTrue(BIU_DIR.exists(), f"Missing BIU test dir: {BIU_DIR}")
         self.assertTrue(BIU_CONFIG.exists(), f"Missing BIU config: {BIU_CONFIG}")
 
-    def assert_run_ok_and_totals(self, args):
+    def assert_run_ok_totals_pinned(self, args, expected_key: str, output_dir: Path | None = None):
         code, out = run_and_capture(args)
         self.assertEqual(code, 0, f"Non-zero exit ({code}) for {args}:\n{out}")
         self.assertIn("Finished executing.", out)
         total_syn, total_neu = extract_totals(out)
         self.assertIsNotNone(total_syn, f"Missing synaptic energy in output:\n{out}")
         self.assertIsNotNone(total_neu, f"Missing neurons energy in output:\n{out}")
-        self.assertRegex(total_syn, r"[0-9.eE+-]+\s*fJ")
-        self.assertRegex(total_neu, r"[0-9.eE+-]+\s*fJ")
+        exp_syn, exp_neu = EXPECTED[expected_key]
+        self.assertEqual(total_syn, exp_syn, f"Synaptic energy mismatch for {expected_key}")
+        self.assertEqual(total_neu, exp_neu, f"Neurons energy mismatch for {expected_key}")
+        if output_dir is not None:
+            self.assertTrue(output_dir.exists(), f"Expected output dir not created: {output_dir}")
+            assert_output_sanity(self, output_dir)
 
     def test_default_run(self):
-        self.assert_run_ok_and_totals([str(SCRIPT)])
+        self.assert_run_ok_totals_pinned([str(SCRIPT)], "default", BIU_DIR / "output_directory")
 
     def test_directory_arg(self):
-        self.assert_run_ok_and_totals([str(SCRIPT), str(BIU_DIR)])
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(BIU_DIR)], "biu_dir", BIU_DIR / "output_directory")
 
     def test_explicit_config(self):
-        self.assert_run_ok_and_totals([str(SCRIPT), str(BIU_CONFIG)])
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(BIU_CONFIG)], "biu_config", BIU_DIR / "output_directory")
 
     def test_multilayer_scenario(self):
-        self.assertTrue(MULTI_CONFIG.exists(), f"Missing multi-layer config: {MULTI_CONFIG}")
-        if MULTI_OUTPUT.exists():
-            for p in MULTI_OUTPUT.glob("*"):
-                try:
-                    if p.is_file():
-                        p.unlink()
-                except Exception:
-                    pass
-        self.assert_run_ok_and_totals([str(SCRIPT), str(MULTI_CONFIG)])
-        self.assertTrue(MULTI_OUTPUT.exists(), f"Expected output dir not created: {MULTI_OUTPUT}")
+        # BIU-dir variant
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(MULTI_CONFIG)], "biu_multi", MULTI_OUTPUT)
 
     def test_per_neuron_precedence_scenario(self):
-        self.assertTrue(PRECEDENCE_CONFIG.exists(), f"Missing precedence config: {PRECEDENCE_CONFIG}")
-        if PRECEDENCE_OUTPUT.exists():
-            for p in PRECEDENCE_OUTPUT.glob("*"):
-                try:
-                    if p.is_file():
-                        p.unlink()
-                except Exception:
-                    pass
-        self.assert_run_ok_and_totals([str(SCRIPT), str(PRECEDENCE_CONFIG)])
-        self.assertTrue(PRECEDENCE_OUTPUT.exists(), f"Expected output dir not created: {PRECEDENCE_OUTPUT}")
+        # BIU-dir variant
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(PRECEDENCE_CONFIG)], "biu_precedence", PRECEDENCE_OUTPUT)
 
     def test_root_multilayer_scenario(self):
-        self.assertTrue(ROOT_MULTI_CONFIG.exists(), f"Missing root multi-layer config: {ROOT_MULTI_CONFIG}")
-        if ROOT_MULTI_OUTPUT.exists():
-            for p in ROOT_MULTI_OUTPUT.glob("*"):
-                try:
-                    if p.is_file():
-                        p.unlink()
-                except Exception:
-                    pass
-        self.assert_run_ok_and_totals([str(SCRIPT), str(ROOT_MULTI_CONFIG)])
-        self.assertTrue(ROOT_MULTI_OUTPUT.exists(), f"Expected output dir not created: {ROOT_MULTI_OUTPUT}")
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(ROOT_MULTI_CONFIG)], "root_multi", ROOT_MULTI_OUTPUT)
 
     def test_root_per_neuron_precedence_scenario(self):
-        self.assertTrue(ROOT_PRECEDENCE_CONFIG.exists(), f"Missing root precedence config: {ROOT_PRECEDENCE_CONFIG}")
-        if ROOT_PRECEDENCE_OUTPUT.exists():
-            for p in ROOT_PRECEDENCE_OUTPUT.glob("*"):
-                try:
-                    if p.is_file():
-                        p.unlink()
-                except Exception:
-                    pass
-        self.assert_run_ok_and_totals([str(SCRIPT), str(ROOT_PRECEDENCE_CONFIG)])
-        self.assertTrue(ROOT_PRECEDENCE_OUTPUT.exists(), f"Expected output dir not created: {ROOT_PRECEDENCE_OUTPUT}")
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(ROOT_PRECEDENCE_CONFIG)], "root_precedence", ROOT_PRECEDENCE_OUTPUT)
 
     def test_root_multilayer_overrides_scenario(self):
-        self.assertTrue(ROOT_ML_OVERRIDES_CONFIG.exists(), f"Missing root multi-layer overrides config: {ROOT_ML_OVERRIDES_CONFIG}")
-        if ROOT_ML_OVERRIDES_OUTPUT.exists():
-            for p in ROOT_ML_OVERRIDES_OUTPUT.glob("*"):
-                try:
-                    if p.is_file():
-                        p.unlink()
-                except Exception:
-                    pass
-        self.assert_run_ok_and_totals([str(SCRIPT), str(ROOT_ML_OVERRIDES_CONFIG)])
-        self.assertTrue(ROOT_ML_OVERRIDES_OUTPUT.exists(), f"Expected output dir not created: {ROOT_ML_OVERRIDES_OUTPUT}")
+        self.assert_run_ok_totals_pinned([str(SCRIPT), str(ROOT_ML_OVERRIDES_CONFIG)], "root_ml_overrides", ROOT_ML_OVERRIDES_OUTPUT)
 
 
 if __name__ == "__main__":

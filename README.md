@@ -7,7 +7,7 @@ This guide explains how to configure a BIU spiking network and per‑neuron para
 - BIU example with ranges and per‑neuron overrides: `bin/Linux/Tests/SNN/BIU/test2.xml`
 - Minimal BIU network: `bin/Linux/Tests/SNN/BIU/test.xml`
 - BIU supervisor defaults (global analog params): `bin/Linux/Tests/SNN/BIU/supervisor.xml`
-- Release notes for new fields and behavior: `bin/WhatsNew.txt`
+- Release notes for new fields and behavior: `docs/WhatsNew.txt`
 
 ### Top‑level structure
 
@@ -41,7 +41,7 @@ The following parameters define global defaults for the whole network. They can 
 - `DSClockMHz` (double): DS clock in MHz. Must be positive.
 - `DSMode` (string): `ThresholdMode` or `FrequencyMode`. If missing or empty, defaults to `ThresholdMode` (informational warning).
 
-Notes from release notes (`bin/WhatsNew.txt`):
+Notes from release notes (`docs/WhatsNew.txt`):
 - If `DSMode` is missing/empty → default `ThresholdMode` is applied with an info/warning.
 - `DSClockMHz` must be positive; otherwise a runtime error is raised.
 - Existing elements still parsed: `fclk`, `VTh`, `RLeak`, `VDD`, `Cn`, `Cu`, `refractory`.
@@ -156,7 +156,7 @@ Example: ranges plus single‑neuron tweak (from `test2.xml`):
 </Layer>
 ```
 
-Validation and errors (from `bin/WhatsNew.txt`):
+Validation and errors (from `docs/WhatsNew.txt`):
 - Invalid `NeuronRange` indices or malformed `Neuron index` produce errors.
 - Missing required `<weights>` or `Layer size` issues produce errors.
 
@@ -177,7 +177,7 @@ While not part of the XML itself, you can supply energy lookup CSVs via the run 
 - `synapses_energy_table_path`: CSV of synapse energy values.
 - `neuron_energy_table_path`: CSV of neuron energy values.
 
-Notes (from `bin/WhatsNew.txt`):
+Notes (from `docs/WhatsNew.txt`):
 - Keys in the config file override any CSV paths that might appear elsewhere.
 - Loading failures leave tables empty; energy lookups then return 0, without stopping the run.
 
@@ -207,11 +207,27 @@ Example `config.json` (fragment):
 From the project root, you can run the simulator using the helper script:
 
 ```bash
-./run_nemosim.sh                               # default BIU example
-./run_nemosim.sh bin/Linux/Tests/SNN/BIU       # directory (uses its config.json)
-./run_nemosim.sh bin/Linux/Tests/SNN/BIU/config.json
+./scripts/run_nemosim.sh                          # default BIU example
+./scripts/run_nemosim.sh bin/Linux/Tests/SNN/BIU  # directory (uses its config.json)
+./scripts/run_nemosim.sh bin/Linux/Tests/SNN/BIU/config.json
 ```
 
 Outputs are written to the path specified by `output_directory` in the corresponding `config.json`.
 
+### Tests
 
+- Test data lives under `tests/data/**` and each scenario contains its own `test.xml`, `supervisor.xml`, `input.txt`, CSVs, and an `output/` directory.
+- Configs in `tests/data/**/config.json` use paths relative to the simulator working directory (`bin/Linux`). This is why the paths look like `../../tests/data/...`.
+- Simulator outputs are ignored by git (see `.gitignore`).
+
+Run the test suite:
+
+```bash
+cd tests
+./run_tests.sh
+```
+
+Pinned assertions in the tests verify:
+- Process success and end-of-run marker
+- Exact total energy values for each scenario
+- Sanity checks on generated outputs (spikes_/vin_/vns_ files exist, are non-empty, and have a minimum line count)
