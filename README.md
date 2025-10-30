@@ -1,45 +1,50 @@
-## NemoSDK (lightweight front-end for NemoSim)
+## 🧠 NemoSDK · Lightweight Front‑End for NemoSim
 
 Describe → Compile → Run BIU spiking networks as XML/JSON artifacts accepted by NemoSim.
 
+[![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-00B16A.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux-000000?logo=linux&logoColor=white)](bin/Linux)
+[![Status](https://img.shields.io/badge/Status-Alpha-FF6B6B.svg)](#)
+
 For background on the NEMO consortium and platform objectives, visit the project website: [nemo.org.il](https://nemo.org.il/).
 
-### What it does
+### ✨ What it does
 - Define BIU networks layer-by-layer with optional per-neuron overrides.
 - Validate shapes, DS interface constraints, and precedence rules.
 - Emit BIU XML and optional supervisor XML.
 - Create `config.json` aligned with repository examples and `docs/WhatsNew.txt`.
 - Run NemoSim with logs captured to files.
 
-### Install / Requirements
+### 📦 Install / Requirements
 - Python ≥ 3.10, stdlib only (numpy optional, not required).
 
-### Public API (import from `nemosdk`)
+### 🧰 Public API (import from `nemosdk`)
 - Model: `BIUNetworkDefaults`, `Layer`, `Synapses`, `NeuronOverrideRange`, `NeuronOverride`.
 - Compiler: `compile_to_xml(defaults, layers, include_supervisor=False)`, `build_run_config(...)`.
 - Runner: `NemoSimRunner(working_dir, binary_path=None).run(config_json, extra_args=None, logs_dir=None)`.
 - CLI: `python -m nemosdk.cli` (subcommands: `build`, `run`, `diag`).
 
-### BIU concepts & precedence
+### 🧩 BIU concepts & precedence
 - Global defaults live under `<BIUNetwork>`.
 - Per-layer overrides (within `<Layer>`):
   - `NeuronRange start..end` and `Neuron index` support `VTh`, `RLeak`, `refractory`.
 - Precedence: Neuron index > NeuronRange > global defaults.
 
-### DS interface constraints
+### 🔌 DS interface constraints
 - `DSBitWidth ∈ {4, 8}`.
 - `DSClockMHz > 0`.
 - `DSMode`: if missing/empty → defaults to `ThresholdMode` (informational).
 
-### Energy tables (optional config.json keys)
+### ⚡ Energy tables (optional config.json keys)
 - `synapses_energy_table_path`, `neuron_energy_table_path` override other sources.
 - Loading failures are non-fatal; energy lookups return 0 (simulator behavior).
 
-### Path resolution
+### 🧭 Path resolution
 - NemoSim resolves relative paths from its working directory (examples use `bin/Linux`).
 - `build_run_config(..., relativize_from=Path('bin/Linux'))` helps ensure configs work with the helper script.
 
-### Examples (no arguments required)
+### 🚀 Examples (no arguments required)
 - `python examples/build_minimal.py`
 - `python examples/build_multilayer_precedence.py`
 - `python examples/build_ds_variants.py`
@@ -47,9 +52,22 @@ For background on the NEMO consortium and platform objectives, visit the project
 
 Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
 
-### More documentation
+### 📚 More documentation
 - BIU XML configuration reference moved to `docs/BIUNetwork_Configuration.md`.
 - Release notes remain in `docs/WhatsNew.txt`.
+
+---
+
+### 🗂️ Table of Contents
+- [✨ What it does](#-what-it-does)
+- [📦 Install / Requirements](#-install--requirements)
+- [🧰 Public API (import from nemosdk)](#-public-api-import-from-nemosdk)
+- [🧩 BIU concepts & precedence](#-biu-concepts--precedence)
+- [🔌 DS interface constraints](#-ds-interface-constraints)
+- [⚡ Energy tables (optional configjson keys)](#-energy-tables-optional-configjson-keys)
+- [🧭 Path resolution](#-path-resolution)
+- [🚀 Examples (no arguments required)](#-examples-no-arguments-required)
+- [📚 More documentation](#-more-documentation)
 
 ### Top‑level structure
 
