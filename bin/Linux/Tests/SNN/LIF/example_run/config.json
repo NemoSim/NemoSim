@@ -1,0 +1,6 @@
+{
+    "output_directory": "/home/avi/projects/NemoSim/bin/Linux/Tests/SNN/LIF/example_run",
+    "xml_config_path": "/home/avi/projects/NemoSim/bin/Linux/Tests/SNN/LIF/example_run/net.xml",
+    "data_input_file": "/home/avi/projects/NemoSim/bin/Linux/Tests/SNN/LIF/example_run/input.txt",
+    "progress_interval_seconds": 2
+}

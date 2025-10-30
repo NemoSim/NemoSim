@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<NetworkConfig type="LIFNetwork">
+    <LIFNetwork>
+        <Cm>1e-06</Cm>
+        <Cf>1e-09</Cf>
+        <VDD>5.0</VDD>
+        <VTh>1.0</VTh>
+        <Dt>0.001</Dt>
+        <IR>1e-10</IR>
+    </LIFNetwork>
+    <Architecture>
+        <Layer size="4"/>
+        <Layer size="3"/>
+        <YFlash rows="4" cols="3">
+            <weights>
+                <row>0.5 -0.1 0.2 0.2</row>
+                <row>0.0 0.3 0.7 0.2</row>
+                <row>-0.2 0.9 0.0 0.2</row>
+            </weights>
+        </YFlash>
+        <Layer size="2"/>
+        <YFlash rows="3" cols="2">
+            <weights>
+                <row>0.6 -0.3</row>
+                <row>-0.5 0.2</row>
+                <row>0.9 0.1</row>
+            </weights>
+        </YFlash>
+    </Architecture>
+</NetworkConfig>
