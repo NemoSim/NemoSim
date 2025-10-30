@@ -1,0 +1,5 @@
+{
+  "output_directory": "examples/out/minimal/output",
+  "xml_config_path": "examples/out/minimal/biu.xml",
+  "data_input_file": "tests/data/multi_layer_test/input.txt"
+}

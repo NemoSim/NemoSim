@@ -1,0 +1,9 @@
+{
+  "output_directory": "../../tests/data/multi_layer_overrides_test/output",
+  "xml_config_path": "../../tests/data/multi_layer_overrides_test/test.xml",
+  "sup_xml_config_path": "../../tests/data/multi_layer_overrides_test/supervisor.xml",
+  "data_input_file": "../../tests/data/multi_layer_overrides_test/input.txt",
+  "synapses_energy_table_path": "../../tests/data/multi_layer_overrides_test/Spike-in_vs_Not_spike-in.csv",
+  "neuron_energy_table_path": "../../tests/data/multi_layer_overrides_test/Energy_Neuron_CSV_Content.csv",
+  "progress_interval_seconds": 2
+}

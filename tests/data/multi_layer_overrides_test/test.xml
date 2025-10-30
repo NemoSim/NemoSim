@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NetworkConfig type="BIUNetwork">
+	<BIUNetwork>
+		<!-- Global defaults for combined test -->
+		<VTh>0.6</VTh>
+		<RLeak>500e6</RLeak>
+		<refractory>12</refractory>
+		<DSClockMHz>10</DSClockMHz>
+		<DSBitWidth>8</DSBitWidth>
+		<DSMode>ThresholdMode</DSMode>
+	</BIUNetwork>
+
+	<Architecture>
+		<!-- Layer 0: 4 neurons, input size = 4 -->
+		<Layer size="4">
+			<synapses rows="4" cols="4">
+				<weights>
+					<row>1 2 3 4</row>
+					<row>0 1 0 2</row>
+					<row>4 3 2 1</row>
+					<row>2 0 2 0</row>
+				</weights>
+			</synapses>
+			<!-- Range overrides for first half [0..1] -->
+			<NeuronRange start="0" end="1">
+				<VTh>0.55</VTh>
+				<RLeak>520e6</RLeak>
+			</NeuronRange>
+			<!-- Single neuron override for neuron 1 (more specific) -->
+			<Neuron index="1">
+				<VTh>0.65</VTh>
+			</Neuron>
+		</Layer>
+
+		<!-- Layer 1: 5 neurons, input size = 4 -->
+		<Layer size="5">
+			<synapses rows="5" cols="4">
+				<weights>
+					<row>5 0 0 0</row>
+					<row>0 5 0 0</row>
+					<row>0 0 5 0</row>
+					<row>0 0 0 5</row>
+					<row>1 1 1 1</row>
+				</weights>
+			</synapses>
+			<!-- Second half [2..4] range overrides -->
+			<NeuronRange start="2" end="4">
+				<VTh>0.25</VTh>
+				<RLeak>540e6</RLeak>
+				<refractory>14</refractory>
+			</NeuronRange>
+			<!-- Most-specific override for neuron 4 -->
+			<Neuron index="4">
+				<VTh>0.22</VTh>
+			</Neuron>
+		</Layer>
+	</Architecture>
+</NetworkConfig>

@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<NetworkConfig type="BIUNetwork"><BIUNetwork><VTh>0.9</VTh><DSClockMHz>25</DSClockMHz><DSBitWidth>8</DSBitWidth><DSMode>ThresholdMode</DSMode></BIUNetwork><Architecture><Layer size="1"><synapses rows="1" cols="1"><weights><row>7</row></weights></synapses></Layer></Architecture></NetworkConfig>
