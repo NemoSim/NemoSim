@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from .compiler import compile_to_xml, build_run_config, write_text, write_json
+from .compiler import compile as compile_model, build_run_config, write_text, write_json
 from .model import BIUNetworkDefaults, Layer, Synapses
 from .runner import NemoSimRunner
 
@@ -25,7 +25,7 @@ def _write_artifacts(args: argparse.Namespace) -> None:
             synapses=Synapses(rows=1, cols=1, weights=[[args.weight]]),
         )
     ]
-    biu_xml, sup_xml = compile_to_xml(
+    biu_xml, sup_xml = compile_model(
         defaults, layers, include_supervisor=args.include_supervisor
     )
 

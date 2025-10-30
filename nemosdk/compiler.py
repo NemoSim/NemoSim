@@ -128,6 +128,24 @@ def compile_to_xml(
     return biu_xml, sup_xml
 
 
+def compile(
+    defaults: BIUNetworkDefaults,
+    layers: list[Layer],
+    include_supervisor: bool = False,
+    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
+) -> tuple[str, Optional[str]]:
+    """Python-first name for the compiler. Returns same outputs as compile_to_xml.
+
+    Provided to keep the public API focused on the SDK semantics rather than XML.
+    """
+    return compile_to_xml(
+        defaults=defaults,
+        layers=layers,
+        include_supervisor=include_supervisor,
+        supervisor_defaults=supervisor_defaults,
+    )
+
+
 def build_run_config(
     *,
     output_directory: Path,

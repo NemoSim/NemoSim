@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses
-from nemosdk.compiler import compile_to_xml, build_run_config, write_text, write_json
+from nemosdk.compiler import compile as compile_model, build_run_config, write_text, write_json
 from nemosdk.runner import NemoSimRunner
 
 
@@ -14,7 +14,7 @@ def make_layers():
 
 def build_one(out_dir: Path, sim_workdir: Path, defaults: BIUNetworkDefaults, name: str, run: bool):
     layers = make_layers()
-    biu_xml, sup_xml = compile_to_xml(defaults, layers)
+    biu_xml, sup_xml = compile_model(defaults, layers)
     biu_xml_path = out_dir / name / "biu.xml"
     write_text(biu_xml_path, biu_xml)
     cfg = build_run_config(

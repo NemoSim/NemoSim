@@ -6,7 +6,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN_DIR="$PROJECT_ROOT/bin/Linux"
-DEFAULT_CONFIG_REL="./Tests/SNN/BIU/config.json"
+# Default to the root-level test data config (paths are relative to bin/Linux)
+DEFAULT_CONFIG_REL="../../tests/data/multi_layer_test/config.json"
 
 usage() {
     cat <<EOF

@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverrideRange, NeuronOverride
-from nemosdk.compiler import compile_to_xml, build_run_config, write_text, write_json
+from nemosdk.compiler import compile as compile_model, build_run_config, write_text, write_json
 from nemosdk.runner import NemoSimRunner
 
 
@@ -50,7 +50,7 @@ def main() -> int:
         neurons=[NeuronOverride(index=6, VTh=0.19)],
     )
 
-    biu_xml, sup_xml = compile_to_xml(defaults, [layer0, layer1], include_supervisor=True)
+    biu_xml, sup_xml = compile_model(defaults, [layer0, layer1], include_supervisor=True)
     biu_xml_path = out_dir / "biu.xml"
     sup_xml_path = out_dir / "supervisor.xml"
     write_text(biu_xml_path, biu_xml)

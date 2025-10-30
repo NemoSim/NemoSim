@@ -18,6 +18,7 @@ from .model import (
 )
 from .compiler import (
     compile_to_xml,
+    compile,
     build_run_config,
 )
 from .runner import NemoSimRunner, RunResult
@@ -29,6 +30,7 @@ __all__ = [
     "NeuronOverrideRange",
     "NeuronOverride",
     "compile_to_xml",
+    "compile",
     "build_run_config",
     "NemoSimRunner",
     "RunResult",
