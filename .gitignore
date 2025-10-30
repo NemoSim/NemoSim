@@ -1,0 +1,7 @@
+/tests/data/**/output/
+/bin/Linux/Tests/**/output/
+/bin/Linux/Tests/**/output_directory/
+
+.DS_Store
+*.swp
+*.swo
