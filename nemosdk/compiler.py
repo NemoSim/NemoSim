@@ -128,6 +128,24 @@ def compile_to_xml(
     return biu_xml, sup_xml
 
 
+def compile(
+    defaults: BIUNetworkDefaults,
+    layers: list[Layer],
+    include_supervisor: bool = False,
+    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
+) -> tuple[str, Optional[str]]:
+    """Python-first name for the compiler. Returns same outputs as compile_to_xml.
+
+    Provided to keep the public API focused on the SDK semantics rather than XML.
+    """
+    return compile_to_xml(
+        defaults=defaults,
+        layers=layers,
+        include_supervisor=include_supervisor,
+        supervisor_defaults=supervisor_defaults,
+    )
+
+
 def build_run_config(
     *,
     output_directory: Path,
@@ -175,7 +193,13 @@ def write_json(path: Path, data: dict) -> None:
 
 
 def os_path_relativize(p: Path, base: Path) -> Path:
-    # Avoid importing os.path at module import time; trivial wrapper
-    return Path(str(p.resolve())).relative_to(base.resolve()) if p.is_absolute() else Path(p)
+    # Produce a relative path from base to p, even if it requires ".." segments
+    p_abs = p if p.is_absolute() else (base / p).resolve()
+    try:
+        return Path(str(p_abs.resolve())).relative_to(base.resolve())
+    except Exception:
+        # Fallback to relpath semantics
+        import os as _os
+        return Path(_os.path.relpath(str(p_abs), str(base.resolve())))
 
 

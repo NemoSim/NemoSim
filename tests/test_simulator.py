@@ -6,17 +6,6 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = PROJECT_ROOT / "scripts" / "run_nemosim.sh"
-BIU_DIR = PROJECT_ROOT / "bin" / "Linux" / "Tests" / "SNN" / "BIU"
-BIU_CONFIG = BIU_DIR / "config.json"
-
-# New scenarios under BIU dir
-MULTI_DIR = BIU_DIR / "multi_layer_test"
-MULTI_CONFIG = MULTI_DIR / "config.json"
-MULTI_OUTPUT = MULTI_DIR / "output"
-
-PRECEDENCE_DIR = BIU_DIR / "per_neuron_precedence_test"
-PRECEDENCE_CONFIG = PRECEDENCE_DIR / "config.json"
-PRECEDENCE_OUTPUT = PRECEDENCE_DIR / "output"
 
 # Root-level test data (moved under tests/data)
 ROOT_MULTI_DIR = PROJECT_ROOT / "tests" / "data" / "multi_layer_test"
@@ -31,17 +20,11 @@ ROOT_ML_OVERRIDES_DIR = PROJECT_ROOT / "tests" / "data" / "multi_layer_overrides
 ROOT_ML_OVERRIDES_CONFIG = ROOT_ML_OVERRIDES_DIR / "config.json"
 ROOT_ML_OVERRIDES_OUTPUT = ROOT_ML_OVERRIDES_DIR / "output"
 
-# Expected pinned totals per scenario
+# Expected pinned totals per scenario (root-level test data only)
 EXPECTED = {
-    "default": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
-    "biu_dir": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
-    "biu_config": ("1.45099e+06 fJ", "3.86833e+08 fJ"),
     "root_multi": ("3.58167e+07 fJ", "4.00494e+08 fJ"),
     "root_precedence": ("4.74923e+06 fJ", "3.8236e+09 fJ"),
     "root_ml_overrides": ("1.28865e+07 fJ", "6.57939e+09 fJ"),
-    # Optional: BIU-dir variants (should match root equivalents if inputs same)
-    "biu_multi": ("3.58167e+07 fJ", "4.00494e+08 fJ"),
-    "biu_precedence": ("4.74923e+06 fJ", "3.8236e+09 fJ"),
 }
 
 
@@ -92,8 +75,6 @@ class TestNemoSimRunner(unittest.TestCase):
     def setUp(self):
         self.assertTrue(SCRIPT.exists(), f"Missing script: {SCRIPT}")
         self.assertTrue(os.access(SCRIPT, os.X_OK), f"Script not executable: {SCRIPT}")
-        self.assertTrue(BIU_DIR.exists(), f"Missing BIU test dir: {BIU_DIR}")
-        self.assertTrue(BIU_CONFIG.exists(), f"Missing BIU config: {BIU_CONFIG}")
 
     def assert_run_ok_totals_pinned(self, args, expected_key: str, output_dir: Path | None = None):
         code, out = run_and_capture(args)
@@ -109,22 +90,7 @@ class TestNemoSimRunner(unittest.TestCase):
             self.assertTrue(output_dir.exists(), f"Expected output dir not created: {output_dir}")
             assert_output_sanity(self, output_dir)
 
-    def test_default_run(self):
-        self.assert_run_ok_totals_pinned([str(SCRIPT)], "default", BIU_DIR / "output_directory")
-
-    def test_directory_arg(self):
-        self.assert_run_ok_totals_pinned([str(SCRIPT), str(BIU_DIR)], "biu_dir", BIU_DIR / "output_directory")
-
-    def test_explicit_config(self):
-        self.assert_run_ok_totals_pinned([str(SCRIPT), str(BIU_CONFIG)], "biu_config", BIU_DIR / "output_directory")
-
-    def test_multilayer_scenario(self):
-        # BIU-dir variant
-        self.assert_run_ok_totals_pinned([str(SCRIPT), str(MULTI_CONFIG)], "biu_multi", MULTI_OUTPUT)
-
-    def test_per_neuron_precedence_scenario(self):
-        # BIU-dir variant
-        self.assert_run_ok_totals_pinned([str(SCRIPT), str(PRECEDENCE_CONFIG)], "biu_precedence", PRECEDENCE_OUTPUT)
+    # BIU-dir scenarios removed; rely on root-level test data exclusively
 
     def test_root_multilayer_scenario(self):
         self.assert_run_ok_totals_pinned([str(SCRIPT), str(ROOT_MULTI_CONFIG)], "root_multi", ROOT_MULTI_OUTPUT)

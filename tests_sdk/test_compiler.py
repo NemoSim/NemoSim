@@ -5,14 +5,14 @@ import xml.etree.ElementTree as ET
 import json
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverride, NeuronOverrideRange
-from nemosdk.compiler import compile_to_xml, build_run_config
+from nemosdk.compiler import compile as compile_model, build_run_config
 
 
 def test_compile_minimal_xml_roundtrip(tmp_path: Path):
     defaults = BIUNetworkDefaults(VTh=0.9, refractory=14, DSBitWidth=8, DSClockMHz=50)
     layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[7.0]]))]
 
-    xml_str, sup = compile_to_xml(defaults, layers)
+    xml_str, sup = compile_model(defaults, layers)
     assert sup is None
     # Parse to ensure well-formed and expected root/attrs
     root = ET.fromstring(xml_str)
@@ -39,7 +39,7 @@ def test_precedence_and_validation(tmp_path: Path):
         neurons=[NeuronOverride(index=1, VTh=0.7)],
     )
 
-    xml_str, _ = compile_to_xml(defaults, [layer])
+    xml_str, _ = compile_model(defaults, [layer])
     root = ET.fromstring(xml_str)
     lyr = root.find("Architecture/Layer")
     assert lyr is not None
