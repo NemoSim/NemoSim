@@ -1,53 +1,26 @@
-## NemoSDK (lightweight front-end for NemoSim)
+## BIUNetwork configuration guide (NemoSim)
 
-Describe → Compile → Run BIU spiking networks as XML/JSON artifacts accepted by NemoSim.
+### Quick start
 
-### What it does
-- Define BIU networks layer-by-layer with optional per-neuron overrides.
-- Validate shapes, DS interface constraints, and precedence rules.
-- Emit BIU XML and optional supervisor XML.
-- Create `config.json` aligned with repository examples and `docs/WhatsNew.txt`.
-- Run NemoSim with logs captured to files.
+Run a sample network and the test suite:
 
-### Install / Requirements
-- Python ≥ 3.10, stdlib only (numpy optional, not required).
+```bash
+# From repo root
+./scripts/run_nemosim.sh tests/data/multi_layer_test/config.json
 
-### Public API (import from `nemosdk`)
-- Model: `BIUNetworkDefaults`, `Layer`, `Synapses`, `NeuronOverrideRange`, `NeuronOverride`.
-- Compiler: `compile_to_xml(defaults, layers, include_supervisor=False)`, `build_run_config(...)`.
-- Runner: `NemoSimRunner(working_dir, binary_path=None).run(config_json, extra_args=None, logs_dir=None)`.
-- CLI: `python -m nemosdk.cli` (subcommands: `build`, `run`, `diag`).
+# Run all Python tests
+cd tests
+./run_tests.sh
+```
 
-### BIU concepts & precedence
-- Global defaults live under `<BIUNetwork>`.
-- Per-layer overrides (within `<Layer>`):
-  - `NeuronRange start..end` and `Neuron index` support `VTh`, `RLeak`, `refractory`.
-- Precedence: Neuron index > NeuronRange > global defaults.
+This guide explains how to configure a BIU spiking network and per‑neuron parameters using the XML schema used by NemoSim. All examples and parameter descriptions are derived from the files in this repository.
 
-### DS interface constraints
-- `DSBitWidth ∈ {4, 8}`.
-- `DSClockMHz > 0`.
-- `DSMode`: if missing/empty → defaults to `ThresholdMode` (informational).
+### Relevant examples in this repo
 
-### Energy tables (optional config.json keys)
-- `synapses_energy_table_path`, `neuron_energy_table_path` override other sources.
-- Loading failures are non-fatal; energy lookups return 0 (simulator behavior).
-
-### Path resolution
-- NemoSim resolves relative paths from its working directory (examples use `bin/Linux`).
-- `build_run_config(..., relativize_from=Path('bin/Linux'))` helps ensure configs work with the helper script.
-
-### Examples (no arguments required)
-- `python examples/build_minimal.py`
-- `python examples/build_multilayer_precedence.py`
-- `python examples/build_ds_variants.py`
-- `python examples/build_with_energy_tables.py`
-
-Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
-
-### More documentation
-- BIU XML configuration reference moved to `docs/BIUNetwork_Configuration.md`.
-- Release notes remain in `docs/WhatsNew.txt`.
+- BIU example with ranges and per‑neuron overrides: `bin/Linux/Tests/SNN/BIU/test2.xml`
+- Minimal BIU network: `bin/Linux/Tests/SNN/BIU/test.xml`
+- BIU supervisor defaults (global analog params): `bin/Linux/Tests/SNN/BIU/supervisor.xml`
+- Release notes for new fields and behavior: `docs/WhatsNew.txt`
 
 ### Top‑level structure
 
@@ -244,7 +217,7 @@ Example `config.json` (fragment):
   "xml_config_path": "./Tests/SNN/BIU/test.xml",
   "sup_xml_config_path": "./Tests/SNN/BIU/supervisor.xml",
   "data_input_file": "./Tests/SNN/BIU/input.txt",
-  "synapses_energy_table_path": "./Tests/SNN/BIU/Spike-in_vs_Not_spike-in.csv",
+  "synapses_energy_table_path": "./Tests/SNN/BIU/Spike-in_vs_Not-spike-in.csv",
   "neuron_energy_table_path": "./Tests/SNN/BIU/Energy_Neuron_CSV_Content.csv"
 }
 ```
@@ -281,20 +254,3 @@ Run the test suite:
 cd tests
 ./run_tests.sh
 ```
-
-### SDK (NemoSDK)
-
-This repo includes a lightweight Python SDK to define → compile → run BIU networks.
-
-- See `README_SDK.md` for API and concepts.
-- Runnable examples live under `examples/` (no arguments needed):
-  - `python examples/build_minimal.py`
-  - `python examples/build_multilayer_precedence.py`
-  - `python examples/build_ds_variants.py`
-  - `python examples/build_with_energy_tables.py`
-- Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
-
-Pinned assertions in the tests verify:
-- Process success and end-of-run marker
-- Exact total energy values for each scenario
-- Sanity checks on generated outputs (spikes_/vin_/vns_ files exist, are non-empty, and have a minimum line count)
