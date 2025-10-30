@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 import xml.etree.ElementTree as ET
 import json
 
@@ -133,17 +133,63 @@ def compile(
     layers: list[Layer],
     include_supervisor: bool = False,
     supervisor_defaults: Optional[BIUNetworkDefaults] = None,
-) -> tuple[str, Optional[str]]:
-    """Python-first name for the compiler. Returns same outputs as compile_to_xml.
+    *,
+    # Optional artifact writing in one step for a 2-line compile→run flow
+    out_dir: Optional[Path] = None,
+    data_input_file: Optional[Path] = None,
+    synapses_energy_table_path: Optional[Path] = None,
+    neuron_energy_table_path: Optional[Path] = None,
+) -> Union[tuple[str, Optional[str]], "CompiledModel"]:
+    """Compile a BIU model.
 
-    Provided to keep the public API focused on the SDK semantics rather than XML.
+    - Default behavior: returns (biu_xml, supervisor_xml) strings.
+    - If out_dir is provided, also writes artifacts and returns the config.json Path
+      to support a concise compile→run usage.
     """
-    return compile_to_xml(
+    biu_xml, sup_xml = compile_to_xml(
         defaults=defaults,
         layers=layers,
         include_supervisor=include_supervisor,
         supervisor_defaults=supervisor_defaults,
     )
+    if out_dir is None:
+        return biu_xml, sup_xml
+
+    # Write artifacts and return config path
+    out_dir.mkdir(parents=True, exist_ok=True)
+    biu_xml_path = out_dir / "biu.xml"
+    write_text(biu_xml_path, biu_xml)
+    sup_xml_path = None
+    if sup_xml is not None:
+        sup_xml_path = out_dir / "supervisor.xml"
+        write_text(sup_xml_path, sup_xml)
+
+    if data_input_file is None:
+        raise ValueError("data_input_file must be provided when out_dir is specified")
+    cfg = build_run_config(
+        output_directory=out_dir / "output",
+        xml_config_path=biu_xml_path,
+        data_input_file=data_input_file,
+        sup_xml_config_path=sup_xml_path,
+        synapses_energy_table_path=synapses_energy_table_path,
+        neuron_energy_table_path=neuron_energy_table_path,
+    )
+    cfg_path = out_dir / "config.json"
+    write_json(cfg_path, cfg)
+    return CompiledModel(config_path=cfg_path)
+
+
+class CompiledModel:
+    """A compiled, runnable model artifact.
+
+    Provides the interface NemoSimRunner expects without exposing raw paths.
+    """
+
+    def __init__(self, config_path: Path):
+        self.config_path = config_path
+
+    def get_config_path(self) -> Path:
+        return self.config_path
 
 
 def build_run_config(
@@ -154,31 +200,24 @@ def build_run_config(
     sup_xml_config_path: Optional[Path] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
-    relativize_from: Optional[Path] = None,
 ) -> dict:
-    """Construct a NemoSim run config.json dict matching repo examples.
-
-    If relativize_from is provided, all paths are converted to relative paths from that
-    directory (matching simulator working directory conventions).
-    """
-    def to_rel(p: Optional[Path]) -> Optional[str]:
+    """Construct a NemoSim run config.json dict with absolute paths."""
+    def to_abs(p: Optional[Path]) -> Optional[str]:
         if p is None:
             return None
-        if relativize_from is None:
-            return str(p)
-        return str(Path(os_path_relativize(p, relativize_from)))
+        return str(p.resolve())
 
     cfg: dict[str, str] = {
-        "output_directory": to_rel(output_directory) or "",
-        "xml_config_path": to_rel(xml_config_path) or "",
-        "data_input_file": to_rel(data_input_file) or "",
+        "output_directory": to_abs(output_directory) or "",
+        "xml_config_path": to_abs(xml_config_path) or "",
+        "data_input_file": to_abs(data_input_file) or "",
     }
     if sup_xml_config_path is not None:
-        cfg["sup_xml_config_path"] = to_rel(sup_xml_config_path) or ""
+        cfg["sup_xml_config_path"] = to_abs(sup_xml_config_path) or ""
     if synapses_energy_table_path is not None:
-        cfg["synapses_energy_table_path"] = to_rel(synapses_energy_table_path) or ""
+        cfg["synapses_energy_table_path"] = to_abs(synapses_energy_table_path) or ""
     if neuron_energy_table_path is not None:
-        cfg["neuron_energy_table_path"] = to_rel(neuron_energy_table_path) or ""
+        cfg["neuron_energy_table_path"] = to_abs(neuron_energy_table_path) or ""
     return cfg
 
 
@@ -193,13 +232,47 @@ def write_json(path: Path, data: dict) -> None:
 
 
 def os_path_relativize(p: Path, base: Path) -> Path:
-    # Produce a relative path from base to p, even if it requires ".." segments
-    p_abs = p if p.is_absolute() else (base / p).resolve()
-    try:
-        return Path(str(p_abs.resolve())).relative_to(base.resolve())
-    except Exception:
-        # Fallback to relpath semantics
-        import os as _os
-        return Path(_os.path.relpath(str(p_abs), str(base.resolve())))
+    # Deprecated in favor of absolute paths
+    return p
+
+
+def compile_and_write(
+    *,
+    defaults: BIUNetworkDefaults,
+    layers: list[Layer],
+    out_dir: Path,
+    data_input_file: Path,
+    include_supervisor: bool = False,
+    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
+    synapses_energy_table_path: Optional[Path] = None,
+    neuron_energy_table_path: Optional[Path] = None,
+) -> dict:
+    """Convenience helper: compile and write artifacts (BIU XML, optional supervisor, config.json).
+
+    Returns the config dict used to write config.json.
+    """
+    biu_xml, sup_xml = compile(
+        defaults=defaults,
+        layers=layers,
+        include_supervisor=include_supervisor,
+        supervisor_defaults=supervisor_defaults,
+    )
+    biu_xml_path = out_dir / "biu.xml"
+    write_text(biu_xml_path, biu_xml)
+    sup_xml_path = None
+    if sup_xml is not None:
+        sup_xml_path = out_dir / "supervisor.xml"
+        write_text(sup_xml_path, sup_xml)
+
+    cfg = build_run_config(
+        output_directory=out_dir / "output",
+        xml_config_path=biu_xml_path,
+        data_input_file=data_input_file,
+        sup_xml_config_path=sup_xml_path,
+        synapses_energy_table_path=synapses_energy_table_path,
+        neuron_energy_table_path=neuron_energy_table_path,
+    )
+    write_json(out_dir / "config.json", cfg)
+    return cfg
 
 

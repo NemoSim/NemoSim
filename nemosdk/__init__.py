@@ -20,6 +20,8 @@ from .compiler import (
     compile_to_xml,
     compile,
     build_run_config,
+    compile_and_write,
+    CompiledModel,
 )
 from .runner import NemoSimRunner, RunResult
 
@@ -32,6 +34,8 @@ __all__ = [
     "compile_to_xml",
     "compile",
     "build_run_config",
+    "compile_and_write",
+    "CompiledModel",
     "NemoSimRunner",
     "RunResult",
 ]

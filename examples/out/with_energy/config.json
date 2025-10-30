@@ -1,7 +1,7 @@
 {
-  "output_directory": "examples/out/with_energy/output",
-  "xml_config_path": "examples/out/with_energy/biu.xml",
-  "data_input_file": "tests/data/multi_layer_test/input.txt",
-  "synapses_energy_table_path": "tests/data/multi_layer_test/Spike-in_vs_Not_spike-in.csv",
-  "neuron_energy_table_path": "tests/data/multi_layer_test/Energy_Neuron_CSV_Content.csv"
+  "output_directory": "/home/avi/projects/NemoSim/examples/out/with_energy/output",
+  "xml_config_path": "/home/avi/projects/NemoSim/examples/out/with_energy/biu.xml",
+  "data_input_file": "/home/avi/projects/NemoSim/tests/data/multi_layer_test/input.txt",
+  "synapses_energy_table_path": "/home/avi/projects/NemoSim/tests/data/multi_layer_test/Spike-in_vs_Not_spike-in.csv",
+  "neuron_energy_table_path": "/home/avi/projects/NemoSim/tests/data/multi_layer_test/Energy_Neuron_CSV_Content.csv"
 }

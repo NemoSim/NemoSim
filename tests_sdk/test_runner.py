@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 
 from nemosdk.runner import NemoSimRunner
+from nemosdk.compiler import CompiledModel
 
 
 def _make_dummy_binary(dir_path: Path) -> Path:
@@ -21,7 +22,7 @@ def test_runner_success_captures_logs(tmp_path: Path):
     cfg.write_text("{}", encoding="utf-8")
 
     runner = NemoSimRunner(working_dir=work)
-    res = runner.run(cfg, check=True)
+    res = runner.run(CompiledModel(config_path=cfg), check=True)
     assert res.returncode == 0
     assert res.stdout_path.exists()
     assert res.stderr_path.exists()
@@ -35,7 +36,7 @@ def test_runner_missing_binary_error(tmp_path: Path):
 
     runner = NemoSimRunner(working_dir=work)
     try:
-        runner.run(cfg)
+        runner.run(CompiledModel(config_path=cfg))
         assert False, "Expected FileNotFoundError"
     except FileNotFoundError:
         pass

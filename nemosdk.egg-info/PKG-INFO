@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: nemosdk
 Version: 0.1.0
 Summary: Lightweight SDK to define, compile, and run BIU networks for NemoSim
-Author-email: Avi <devnull@example.com>
+Author-email: Avi <hazannum@post.bgu.ac.il>
 License: MIT
 Project-URL: Homepage, https://example.invalid/NemoSim
 Requires-Python: >=3.10

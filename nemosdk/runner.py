@@ -6,6 +6,11 @@ from typing import Iterable, List, Optional, Sequence
 import subprocess
 import datetime as _dt
 
+try:
+    from .compiler import CompiledModel
+except Exception:  # pragma: no cover - avoid import cycles during type checking
+    CompiledModel = None  # type: ignore
+
 
 @dataclass(slots=True)
 class RunResult:
@@ -30,12 +35,13 @@ class NemoSimRunner:
 
     def run(
         self,
-        config_json: Path,
+        compiled: "CompiledModel",
         *,
         extra_args: Optional[Sequence[str]] = None,
         logs_dir: Optional[Path] = None,
         check: bool = True,
     ) -> RunResult:
+        config_path = compiled.get_config_path()
         if not self.working_dir.exists():
             raise FileNotFoundError(f"Invalid working directory: {self.working_dir}")
         if not self.binary_path.exists():
@@ -54,7 +60,7 @@ class NemoSimRunner:
             bin_arg = str(self.binary_path)
         else:
             bin_arg = "./" + Path(self.binary_path).name
-        args: List[str] = [bin_arg, str(config_json)]
+        args: List[str] = [bin_arg, str(config_path)]
         if extra_args:
             args.extend(list(extra_args))
 
