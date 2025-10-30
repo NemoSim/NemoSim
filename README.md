@@ -2,6 +2,8 @@
 
 Describe → Compile → Run BIU spiking networks as XML/JSON artifacts accepted by NemoSim.
 
+For background on the NEMO consortium and platform objectives, visit the project website: [nemo.org.il](https://nemo.org.il/).
+
 ### What it does
 - Define BIU networks layer-by-layer with optional per-neuron overrides.
 - Validate shapes, DS interface constraints, and precedence rules.
