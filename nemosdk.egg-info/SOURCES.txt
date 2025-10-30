@@ -10,4 +10,3 @@ nemosdk.egg-info/SOURCES.txt
 nemosdk.egg-info/dependency_links.txt
 nemosdk.egg-info/entry_points.txt
 nemosdk.egg-info/top_level.txt
-tests/test_simulator.py

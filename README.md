@@ -118,7 +118,7 @@ Artifacts are written under `examples/out/...` and paths are relativized to `bin
 
 ### 🧪 Testing & Development
 
-- Run SDK tests: `uv run -q pytest -q tests_sdk` (or `python3 -m pytest -q tests_sdk`)
+- Run SDK tests: `uv run -q pytest -q tests/sdk` (or `python3 -m pytest -q tests/sdk`)
 - Code style: fully typed public API; prefer small, cohesive modules
 
 ### 🏃 Simulator Expectations
