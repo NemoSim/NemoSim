@@ -255,6 +255,18 @@ cd tests
 ./run_tests.sh
 ```
 
+### SDK (NemoSDK)
+
+This repo includes a lightweight Python SDK to define → compile → run BIU networks.
+
+- See `README_SDK.md` for API and concepts.
+- Runnable examples live under `examples/` (no arguments needed):
+  - `python examples/build_minimal.py`
+  - `python examples/build_multilayer_precedence.py`
+  - `python examples/build_ds_variants.py`
+  - `python examples/build_with_energy_tables.py`
+- Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
+
 Pinned assertions in the tests verify:
 - Process success and end-of-run marker
 - Exact total energy values for each scenario

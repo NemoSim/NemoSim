@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nemosdk"
+version = "0.1.0"
+description = "Lightweight SDK to define, compile, and run BIU networks for NemoSim"
+readme = "README_SDK.md"
+requires-python = ">=3.10"
+authors = [{ name = "Avi", email = "" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.urls]
+Homepage = "https://example.invalid/NemoSim"
+
+[project.scripts]
+nemosdk = "nemosdk.cli:main"
+
+[tool.setuptools]
+packages = ["nemosdk"]
+
+
