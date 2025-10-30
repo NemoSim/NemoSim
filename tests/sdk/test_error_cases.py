@@ -79,3 +79,4 @@ def test_runner_nonzero_exit_check_true_raises(tmp_path: Path):
         runner.run(CompiledModel(config_path=cfg), check=True)
 
 
+

@@ -4,10 +4,10 @@ import unittest
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = PROJECT_ROOT / "scripts" / "run_nemosim.sh"
 
-# Root-level test data (moved under tests/data)
+# Root-level test data remains under tests/data
 ROOT_MULTI_DIR = PROJECT_ROOT / "tests" / "data" / "multi_layer_test"
 ROOT_MULTI_CONFIG = ROOT_MULTI_DIR / "config.json"
 ROOT_MULTI_OUTPUT = ROOT_MULTI_DIR / "output"
@@ -20,7 +20,6 @@ ROOT_ML_OVERRIDES_DIR = PROJECT_ROOT / "tests" / "data" / "multi_layer_overrides
 ROOT_ML_OVERRIDES_CONFIG = ROOT_ML_OVERRIDES_DIR / "config.json"
 ROOT_ML_OVERRIDES_OUTPUT = ROOT_ML_OVERRIDES_DIR / "output"
 
-# Expected pinned totals per scenario (root-level test data only)
 EXPECTED = {
     "root_multi": ("3.58167e+07 fJ", "4.00494e+08 fJ"),
     "root_precedence": ("4.74923e+06 fJ", "3.8236e+09 fJ"),
@@ -55,14 +54,12 @@ def extract_totals(output: str):
 
 
 def assert_output_sanity(testcase: unittest.TestCase, output_dir: Path):
-    # Basic sanity: at least one of each expected file type exists and is non-empty
     spikes = sorted(output_dir.glob("spikes_*.txt"))
     vin = sorted(output_dir.glob("vin_*.txt"))
     vns = sorted(output_dir.glob("vns_*.txt"))
     testcase.assertGreaterEqual(len(spikes), 1, f"No spikes_*.txt in {output_dir}")
     testcase.assertGreaterEqual(len(vin), 1, f"No vin_*.txt in {output_dir}")
     testcase.assertGreaterEqual(len(vns), 1, f"No vns_*.txt in {output_dir}")
-    # Non-empty and minimum line counts (>= 10 lines) as a rough sanity
     for f in [spikes[0], vin[0], vns[0]]:
         size = f.stat().st_size
         testcase.assertGreater(size, 0, f"Empty output file: {f}")
@@ -89,8 +86,6 @@ class TestNemoSimRunner(unittest.TestCase):
         if output_dir is not None:
             self.assertTrue(output_dir.exists(), f"Expected output dir not created: {output_dir}")
             assert_output_sanity(self, output_dir)
-
-    # BIU-dir scenarios removed; rely on root-level test data exclusively
 
     def test_root_multilayer_scenario(self):
         self.assert_run_ok_totals_pinned([str(SCRIPT), str(ROOT_MULTI_CONFIG)], "root_multi", ROOT_MULTI_OUTPUT)

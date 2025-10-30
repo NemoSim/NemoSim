@@ -3,5 +3,5 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
-python3 -m unittest -v
+python3 -m unittest discover -s . -p "test*.py" -v
 

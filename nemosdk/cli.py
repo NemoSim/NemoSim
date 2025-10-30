@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+"""NemoSDK CLI: build minimal artifacts, run the simulator, or diagnose paths.
+
+Subcommands:
+  - build: compile a minimal 1×1 network and write artifacts
+  - run:   run the simulator with a given config.json
+  - diag:  print how a path resolves from the simulator working dir
+"""
+
 import argparse
 from pathlib import Path
 import sys
 
-from .compiler import compile as compile_model, build_run_config, write_text, write_json
+from .compiler import compile as compile_model, build_run_config, write_text, write_json, CompiledModel
 from .model import BIUNetworkDefaults, Layer, Synapses
 from .runner import NemoSimRunner
 
 
 def _write_artifacts(args: argparse.Namespace) -> None:
-    # Minimal demo: a 1x1 network unless a JSON spec is provided in the future.
+    """Build a minimal 1×1 network and write BIU XML, optional supervisor, and config.json."""
     defaults = BIUNetworkDefaults(
         VTh=args.vth,
         RLeak=args.rleak,
@@ -37,28 +45,30 @@ def _write_artifacts(args: argparse.Namespace) -> None:
         sup_xml_path = out_dir / "supervisor.xml"
         write_text(sup_xml_path, sup_xml)
 
-    # Build config.json
+    # Build config.json with absolute paths
     cfg = build_run_config(
         output_directory=out_dir / "outputs",
         xml_config_path=biu_xml_path,
-        sup_xml_config_path=sup_xml_path,
         data_input_file=Path(args.data_input_file),
+        sup_xml_config_path=sup_xml_path,
         synapses_energy_table_path=Path(args.syn_energy) if args.syn_energy else None,
         neuron_energy_table_path=Path(args.neu_energy) if args.neu_energy else None,
-        relativize_from=Path(args.sim_workdir) if args.sim_workdir else None,
     )
     write_json(out_dir / "config.json", cfg)
 
 
 def _run_sim(args: argparse.Namespace) -> None:
+    """Run the simulator using a config.json path and print basic results/log paths."""
     runner = NemoSimRunner(working_dir=Path(args.sim_workdir), binary_path=Path(args.bin) if args.bin else None)
-    res = runner.run(Path(args.config), extra_args=args.extra)
+    compiled = CompiledModel(config_path=Path(args.config))
+    res = runner.run(compiled, extra_args=args.extra)
     print("Return code:", res.returncode)
     print("Stdout log:", res.stdout_path)
     print("Stderr log:", res.stderr_path)
 
 
 def _diag(args: argparse.Namespace) -> None:
+    """Echo a path as seen from the simulator working directory."""
     base = Path(args.sim_workdir)
     p = Path(args.path)
     if p.is_absolute():

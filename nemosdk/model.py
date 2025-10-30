@@ -6,9 +6,18 @@ from typing import Iterable, List, Optional, Sequence
 
 @dataclass(slots=True)
 class BIUNetworkDefaults:
-    """Global BIU defaults under <BIUNetwork>.
+    """Global BIU defaults placed under the `<BIUNetwork>` XML element.
 
-    Only the parameters exercised by examples/release notes are modeled here.
+    Parameters mirror the subset used by the simulator and examples.
+
+    - VTh, RLeak, refractory: logical neuron defaults
+    - VDD, Cn, Cu, fclk: analog/energy‑related defaults
+    - DSBitWidth, DSClockMHz, DSMode: digital interface parameters
+
+    Validation:
+    - DSBitWidth must be 4 or 8
+    - DSClockMHz must be > 0
+    - DSMode must be "ThresholdMode" or "FrequencyMode" (empty/missing defaults to "ThresholdMode")
     """
 
     VTh: Optional[float] = None
@@ -33,6 +42,11 @@ class BIUNetworkDefaults:
 
 @dataclass(slots=True)
 class Synapses:
+    """Incoming synapse matrix for a layer.
+
+    - rows × cols defines the expected shape
+    - weights must contain exactly `rows` lists, each with `cols` numbers
+    """
     rows: int
     cols: int
     weights: List[List[float]]
@@ -49,6 +63,7 @@ class Synapses:
 
 @dataclass(slots=True)
 class NeuronOverrideRange:
+    """Override defaults for an inclusive neuron index range [start, end]."""
     start: int
     end: int  # inclusive
     VTh: Optional[float] = None
@@ -64,6 +79,7 @@ class NeuronOverrideRange:
 
 @dataclass(slots=True)
 class NeuronOverride:
+    """Override defaults for a single neuron at `index`."""
     index: int
     VTh: Optional[float] = None
     RLeak: Optional[float] = None
@@ -76,6 +92,13 @@ class NeuronOverride:
 
 @dataclass(slots=True)
 class Layer:
+    """A network layer with size, synapses, and optional per‑neuron overrides.
+
+    Invariants enforced by validate():
+    - size > 0
+    - synapses.rows == size
+    - ranges and neurons within [0, size-1] with start <= end
+    """
     size: int
     synapses: Synapses
     ranges: List[NeuronOverrideRange] = field(default_factory=list)
@@ -105,10 +128,13 @@ def materialize_precedence(
     ranges: Sequence[NeuronOverrideRange],
     neurons: Sequence[NeuronOverride],
 ) -> dict[str, List[Optional[float | int]]]:
-    """Compute final per-neuron vectors with precedence: neuron > range > global.
+    """Compute final per‑neuron vectors with precedence: neuron > range > global.
 
-    Returns a dict with keys: VTh, RLeak, refractory each mapping to a list of size 'size'
-    with possibly None values where not explicitly set (to be omitted from XML).
+    Returns
+    -------
+    dict
+        Keys: "VTh", "RLeak", "refractory". Values are lists (length `size`) that
+        contain the resolved scalar per neuron; entries may be None if not set.
     """
     vth: List[Optional[float]] = [defaults.VTh] * size
     rleak: List[Optional[float]] = [defaults.RLeak] * size

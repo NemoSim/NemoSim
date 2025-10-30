@@ -42,3 +42,4 @@ def test_runner_missing_binary_error(tmp_path: Path):
         pass
 
 
+

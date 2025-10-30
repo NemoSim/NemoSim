@@ -13,6 +13,7 @@ from .model import (
 
 
 def _append_text(parent: ET.Element, tag: str, text: str) -> ET.Element:
+    """Create a child element under `parent` with stringified text content."""
     el = ET.SubElement(parent, tag)
     el.text = str(text)
     return el
@@ -24,9 +25,23 @@ def compile_to_xml(
     include_supervisor: bool = False,
     supervisor_defaults: Optional[BIUNetworkDefaults] = None,
 ) -> tuple[str, Optional[str]]:
-    """Produce XML strings for BIU network and optional supervisor.
+    """Produce XML strings for a BIU network and an optional supervisor file.
 
-    Returns (biu_xml_str, supervisor_xml_str|None)
+    Parameters
+    ----------
+    defaults
+        Global network defaults to emit under `<BIUNetwork>`.
+    layers
+        Ordered list of layers to emit under `<Architecture>`.
+    include_supervisor
+        Whether to also emit a separate supervisor XML string.
+    supervisor_defaults
+        Optional defaults used when emitting the supervisor XML.
+
+    Returns
+    -------
+    tuple[str, Optional[str]]
+        `(biu_xml, supervisor_xml)` where `supervisor_xml` is None when not requested.
     """
     # Validate inputs early
     defaults.validate()
@@ -140,11 +155,13 @@ def compile(
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> Union[tuple[str, Optional[str]], "CompiledModel"]:
-    """Compile a BIU model.
+    """Compile a BIU model into XML, optionally writing runnable artifacts.
 
-    - Default behavior: returns (biu_xml, supervisor_xml) strings.
-    - If out_dir is provided, also writes artifacts and returns the config.json Path
-      to support a concise compile→run usage.
+    Behavior
+    --------
+    - If `out_dir` is None: returns `(biu_xml, supervisor_xml)` strings.
+    - If `out_dir` is provided: writes `biu.xml`, optional `supervisor.xml`, and
+      `config.json`, then returns a `CompiledModel` with the config path.
     """
     biu_xml, sup_xml = compile_to_xml(
         defaults=defaults,
@@ -180,9 +197,9 @@ def compile(
 
 
 class CompiledModel:
-    """A compiled, runnable model artifact.
+    """A compiled, runnable model artifact exposing a config path.
 
-    Provides the interface NemoSimRunner expects without exposing raw paths.
+    This wrapper keeps the runner interface stable without exposing raw paths.
     """
 
     def __init__(self, config_path: Path):
@@ -201,7 +218,11 @@ def build_run_config(
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> dict:
-    """Construct a NemoSim run config.json dict with absolute paths."""
+    """Construct a `config.json` dict with absolute paths for NemoSim.
+
+    Parameters are written as absolute paths to avoid working‑directory issues.
+    Only provided optional paths are included.
+    """
     def to_abs(p: Optional[Path]) -> Optional[str]:
         if p is None:
             return None
@@ -222,17 +243,19 @@ def build_run_config(
 
 
 def write_text(path: Path, content: str) -> None:
+    """Write UTF‑8 text to `path`, creating parent directories as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
 def write_json(path: Path, data: dict) -> None:
+    """Write pretty‑printed JSON to `path` (UTF‑8), ensuring parent dirs exist."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def os_path_relativize(p: Path, base: Path) -> Path:
-    # Deprecated in favor of absolute paths
+    # Deprecated in favor of absolute paths; kept for backward compatibility.
     return p
 
 
@@ -247,9 +270,10 @@ def compile_and_write(
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> dict:
-    """Convenience helper: compile and write artifacts (BIU XML, optional supervisor, config.json).
+    """Convenience helper to compile and write artifacts in one step.
 
-    Returns the config dict used to write config.json.
+    Writes `biu.xml`, optional `supervisor.xml`, and `config.json` into `out_dir`.
+    Returns the in‑memory config dict used for `config.json`.
     """
     biu_xml, sup_xml = compile(
         defaults=defaults,

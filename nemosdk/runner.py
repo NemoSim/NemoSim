@@ -14,6 +14,7 @@ except Exception:  # pragma: no cover - avoid import cycles during type checking
 
 @dataclass(slots=True)
 class RunResult:
+    """Immutable result summary for a simulator invocation."""
     returncode: int
     command: List[str]
     cwd: Path
@@ -22,11 +23,11 @@ class RunResult:
 
 
 class NemoSimRunner:
-    """Runner for NemoSim binary with logging and path handling.
+    """Runner for the NemoSim binary with logging and path handling.
 
-    By default, expects the simulator working directory to be <repo>/bin/Linux.
-    The binary path can be provided or discovered via NEMOSIM_BIN env value. If neither
-    is provided, the default 'NEMOSIM' under working_dir is used.
+    - `working_dir` should be the simulator working directory (e.g., `bin/Linux`).
+    - `binary_path` defaults to `working_dir / "NEMOSIM"` when not provided.
+    - Logs are written under `working_dir/logs` with timestamped filenames.
     """
 
     def __init__(self, working_dir: Path, binary_path: Optional[Path] = None):
@@ -41,6 +42,12 @@ class NemoSimRunner:
         logs_dir: Optional[Path] = None,
         check: bool = True,
     ) -> RunResult:
+        """Execute the simulator with the provided compiled model.
+
+        - `compiled` must expose `.get_config_path()` (see `CompiledModel`).
+        - `extra_args` are appended to the command line.
+        - When `check=True`, a non‑zero exit raises `RuntimeError` with log paths.
+        """
         config_path = compiled.get_config_path()
         if not self.working_dir.exists():
             raise FileNotFoundError(f"Invalid working directory: {self.working_dir}")
