@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverrideRange, NeuronOverride
-from nemosdk.compiler import compile as compile_model, build_run_config, write_text, write_json
+from nemosdk.compiler import compile as compile_model
 from nemosdk.runner import NemoSimRunner
 
 
@@ -50,24 +50,15 @@ def main() -> int:
         neurons=[NeuronOverride(index=6, VTh=0.19)],
     )
 
-    biu_xml, sup_xml = compile_model(defaults, [layer0, layer1], include_supervisor=True)
-    biu_xml_path = out_dir / "biu.xml"
-    sup_xml_path = out_dir / "supervisor.xml"
-    write_text(biu_xml_path, biu_xml)
-    if sup_xml:
-        write_text(sup_xml_path, sup_xml)
-
-    cfg = build_run_config(
-        output_directory=out_dir / "output",
-        xml_config_path=biu_xml_path,
-        sup_xml_config_path=sup_xml_path,
+    # Two lines: compile, then run
+    cfg_path = compile_model(
+        defaults=defaults,
+        layers=[layer0, layer1],
+        include_supervisor=True,
+        out_dir=out_dir,
         data_input_file=Path("tests/data/multi_layer_test/input.txt"),
         relativize_from=sim_workdir,
     )
-    cfg_path = out_dir / "config.json"
-    write_json(cfg_path, cfg)
-
-    # Always run using assumed simulator location
     runner = NemoSimRunner(working_dir=sim_workdir)
     res = runner.run(cfg_path, check=True)
     print("Return code:", res.returncode)

@@ -7,6 +7,7 @@ import pytest
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverrideRange
 from nemosdk.compiler import compile as compile_model
 from nemosdk.runner import NemoSimRunner
+from nemosdk.compiler import CompiledModel
 
 
 def test_invalid_ds_mode_raises():
@@ -62,7 +63,7 @@ def test_runner_nonzero_exit_check_false_returns(tmp_path: Path):
     cfg.write_text("{}", encoding="utf-8")
 
     runner = NemoSimRunner(working_dir=work)
-    res = runner.run(cfg, check=False)
+    res = runner.run(CompiledModel(config_path=cfg), check=False)
     assert res.returncode != 0
 
 
@@ -75,6 +76,6 @@ def test_runner_nonzero_exit_check_true_raises(tmp_path: Path):
 
     runner = NemoSimRunner(working_dir=work)
     with pytest.raises(RuntimeError):
-        runner.run(cfg, check=True)
+        runner.run(CompiledModel(config_path=cfg), check=True)
 
 

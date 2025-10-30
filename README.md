@@ -72,24 +72,19 @@ from nemosdk.runner import NemoSimRunner
 defaults = BIUNetworkDefaults(VTh=0.9, refractory=14, DSBitWidth=8, DSClockMHz=50)
 layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[7.0]]))]
 
-# 2) Compile
-biu_xml, _ = compile(defaults, layers)
-
-# 3) Write artifacts and run
+# 2) Two lines: compile, then run
+from nemosdk.compiler import compile as compile_model
 out = Path("examples/out/quickstart")
-biu_path = out / "biu.xml"
-write_text(biu_path, biu_xml)
-cfg = build_run_config(
-    output_directory=out / "output",
-    xml_config_path=biu_path,
+cfg_path = compile_model(
+    defaults=defaults,
+    layers=layers,
+    out_dir=out,
     data_input_file=Path("tests/data/multi_layer_test/input.txt"),
     relativize_from=Path("bin/Linux"),
 )
-cfg_path = out / "config.json"
-write_json(cfg_path, cfg)
 
-runner = NemoSimRunner(working_dir=Path("bin/Linux"))
-result = runner.run(cfg_path, check=True)
+from nemosdk.runner import NemoSimRunner
+result = NemoSimRunner(working_dir=Path("bin/Linux")).run(cfg_path, check=True)
 print("OK:", result.returncode)
 ```
 
