@@ -3,6 +3,9 @@
 	<BIUNetwork>
         <VTh>0.9</VTh>
 		<refractory>14</refractory>
+		<DSBitWidth>8</DSBitWidth>
+		<DSClockMHz>50</DSClockMHz>
+		<DSMode>ThresholdMode</DSMode>
 	</BIUNetwork>
     <Architecture>
         <Layer size="1">
