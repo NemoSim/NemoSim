@@ -1,6 +1,6 @@
 ## 🧠 NemoSDK · Lightweight Front‑End for NemoSim
 
-Describe → Compile → Run BIU spiking networks using a clean Python API. No XML editing required.
+Describe → Compile → Run BIU spiking networks using a clean Python API.
 
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-00B16A.svg)](LICENSE)
@@ -26,7 +26,7 @@ For background on the NEMO consortium and platform objectives, visit the project
   - `NeuronOverrideRange(start, end, VTh=?, RLeak=?, refractory=?)`
   - `NeuronOverride(index, VTh=?, RLeak=?, refractory=?)`
 - Build & run helpers
-  - `compile(defaults, layers, include_supervisor=False)` → compile (no XML editing required)
+  - `compile(defaults, layers, include_supervisor=False)` → compile
   - `build_run_config(...)` → internal runner config (usually used via examples/CLI)
   - `NemoSimRunner(working_dir).run(config_json_path)` → executes the simulator and captures logs
 - CLI (optional): `python -m nemosdk.cli` (`build`, `run`, `diag`)
@@ -72,7 +72,7 @@ from nemosdk.runner import NemoSimRunner
 defaults = BIUNetworkDefaults(VTh=0.9, refractory=14, DSBitWidth=8, DSClockMHz=50)
 layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[7.0]]))]
 
-# 2) Compile (no XML editing required)
+# 2) Compile
 biu_xml, _ = compile(defaults, layers)
 
 # 3) Write artifacts and run
