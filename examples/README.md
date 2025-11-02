@@ -6,6 +6,7 @@ This directory contains runnable examples demonstrating common tasks:
 - Multilayer with per-neuron precedence (ranges vs. index)
 - DS interface variants (defaulted DSMode, FrequencyMode)
 - Config with optional energy tables
+- Results plotting and visualization
 
 ### Usage
 
@@ -16,9 +17,15 @@ python examples/build_minimal.py                    # builds and runs
 python examples/build_multilayer_precedence.py
 python examples/build_ds_variants.py
 python examples/build_with_energy_tables.py
+python examples/build_with_plotting.py              # builds, runs, and plots results
 
 # Or run all
 bash examples/run_all.sh
+```
+
+Note: `build_with_plotting.py` requires `matplotlib` and `numpy`:
+```bash
+pip install matplotlib numpy
 ```
 
 Artifacts are written under `examples/out/<scenario>/`:

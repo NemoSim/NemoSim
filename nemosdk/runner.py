@@ -48,7 +48,7 @@ class NemoSimRunner:
         - `extra_args` are appended to the command line.
         - When `check=True`, a non‑zero exit raises `RuntimeError` with log paths.
         """
-        config_path = compiled.get_config_path()
+        config_path = compiled.get_config_path().resolve()
         if not self.working_dir.exists():
             raise FileNotFoundError(f"Invalid working directory: {self.working_dir}")
         if not self.binary_path.exists():
