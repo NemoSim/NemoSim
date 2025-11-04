@@ -14,12 +14,25 @@ except Exception:  # pragma: no cover - avoid import cycles during type checking
 
 @dataclass(slots=True)
 class RunResult:
-    """Immutable result summary for a simulator invocation."""
+    """Immutable result summary for a simulator invocation.
+    
+    Attributes:
+        returncode: Process exit code (0 = success, non-zero = failure)
+        command: Full command line that was executed
+        cwd: Working directory where the command was executed
+        stdout_path: Path to the stdout log file
+        stderr_path: Path to the stderr log file (contains error details if returncode != 0)
+    """
     returncode: int
     command: List[str]
     cwd: Path
     stdout_path: Path
     stderr_path: Path
+    
+    @property
+    def is_success(self) -> bool:
+        """Returns True if the simulation completed successfully (returncode == 0)."""
+        return self.returncode == 0
 
 
 class NemoSimRunner:
@@ -44,9 +57,23 @@ class NemoSimRunner:
     ) -> RunResult:
         """Execute the simulator with the provided compiled model.
 
-        - `compiled` must expose `.get_config_path()` (see `CompiledModel`).
-        - `extra_args` are appended to the command line.
-        - When `check=True`, a non‑zero exit raises `RuntimeError` with log paths.
+        Args:
+            compiled: Must expose `.get_config_path()` (see `CompiledModel`).
+            extra_args: Optional additional arguments appended to the command line.
+            logs_dir: Directory for log files (defaults to `working_dir/logs`).
+            check: If True, raises `RuntimeError` when return code is non-zero.
+
+        Returns:
+            RunResult with return code and log file paths.
+
+        Raises:
+            FileNotFoundError: If working directory or binary doesn't exist.
+            RuntimeError: If `check=True` and simulator exits with non-zero code.
+            
+        Note:
+            Return codes follow standard process exit codes:
+            - 0 = Success
+            - Non-zero = Failure (error details in stderr log)
         """
         config_path = compiled.get_config_path().resolve()
         if not self.working_dir.exists():

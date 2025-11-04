@@ -443,6 +443,22 @@ Do the following:
    NEMOSIM.exe config.json
    ```
 
+   **Alternative - Using the Python SDK:**
+
+   If you're using the Python SDK (`nemosdk`), you can run simulations programmatically:
+
+   ```python
+   from nemosdk import NemoSimRunner
+   from pathlib import Path
+   
+   runner = NemoSimRunner(working_dir=Path("bin/Linux"))
+   result = runner.run(compiled_model, check=True)
+   print(f"Return code: {result.returncode}")
+   print(f"Logs: {result.stdout_path}, {result.stderr_path}")
+   ```
+
+   The SDK automatically captures stdout and stderr to log files and returns a `RunResult` object with the process exit code.
+
 2. While the NemoSim is running, it will display progress messages on the screen, as demonstrated in **Example 3-1**. If an error occurs, an error or warning message will be displayed (for details, see Section 4).
 
    **Example 3-1: NemoSim Progress Messages**
@@ -457,15 +473,17 @@ Output files are plain text, each containing a list of numeric values (one per l
 
 **LIF Simulation (three files per neuron):**
 
-- `Iins_<x>_<y>.txt`: Input currents
-- `Vms_<x>_<y>.txt`: Membrane potentials
-- `Vouts_<x>_<y>.txt`: Output voltages (spikes)
+- `iins_<x>_<y>.txt`: Input currents
+- `vms_<x>_<y>.txt`: Membrane potentials
+- `vouts_<x>_<y>.txt`: Output voltages (spikes)
 
 **BIU Simulation (three files per neuron):**
 
-- `Vin_<x>_<y>.txt`: Synapse input values
-- `Vns_<x>_<y>.txt`: Neural state potentials
-- `Spikes_<x>_<y>.txt`: Output spikes
+- `vin_<x>_<y>.txt`: Synapse input values
+- `vns_<x>_<y>.txt`: Neural state potentials
+- `spikes_<x>_<y>.txt`: Output spikes
+
+**Note:** All output filenames use lowercase letters (e.g., `spikes_0_0.txt`, `vin_0_0.txt`, `vns_0_0.txt`).
 
 After the output files have been generated, you can plot or analyze them to look for neurons with unexpected behaviors (for example, constant potentials or no spikes) for further debugging.
 
@@ -477,7 +495,7 @@ Do one of the following:
 **For example:**
 
 ```bash
-python plot_vm_to_dt.py Iins_0_0.txt vms_0_0.txt Vouts_0_0.txt
+python plot_vm_to_dt.py iins_0_0.txt vms_0_0.txt vouts_0_0.txt
 ```
 
 ---
@@ -498,17 +516,14 @@ Error: Network type attribute not found in <NetworkConfig>.
 
 ## 4.2 Possible Return Codes
 
-The code uses TinyXML2, which defines error codes such as:
+The NemoSim simulator uses standard process exit codes:
 
-- `XML_SUCCESS (0)`: Success
-- `XML_NO_ATTRIBUTE`
-- `XML_WRONG_ATTRIBUTE_TYPE`
-- `XML_ERROR_FILE_NOT_FOUND`
-- `XML_ERROR_FILE_COULD_NOT_BE_OPENED`
-- `XML_ERROR_FILE_READ_ERROR`
-- `XML_ERROR_PARSING_ELEMENT`
+- **0**: Success - The simulation completed successfully
+- **Non-zero**: Failure - The simulation encountered an error and stopped
 
-For the full list, see TinyXML2's `XMLError` enum.
+When using the Python SDK (`nemosdk`), the `RunResult.returncode` field contains the process exit code. The SDK will raise a `RuntimeError` if `check=True` and the return code is non-zero.
+
+**Internal Implementation Note:** The simulator internally uses TinyXML2 for XML parsing, which may produce internal error codes (such as `XML_SUCCESS`, `XML_ERROR_FILE_NOT_FOUND`, etc.). These are translated into process exit codes. Detailed error messages are written to the stderr log file, which can be accessed via `RunResult.stderr_path` when using the SDK.
 
 ---
 
@@ -516,4 +531,4 @@ For the full list, see TinyXML2's `XMLError` enum.
 
 - For details and example files for LIF, see `Tests/SNN/LIF/`.
 - For details and example files for BIU, see `Tests/SNN/BIU/`.
-- Output file examples: `Vin.txt`, `Vns.txt` (in the test folders).
+- Output file examples: `vin.txt`, `vns.txt`, `spikes.txt` (in the test folders).
