@@ -56,8 +56,11 @@ classDiagram
     class NemoSimRunner {
         -Path working_dir
         -Path binary_path
+        +__init__(working_dir, binary_path)
         +run(config, check) RunResult
     }
+    
+    note for NemoSimRunner "binary_path resolution:<br/>1. Explicit parameter<br/>2. NEMOSIM_BINARY env var<br/>3. Default: working_dir / 'NEMOSIM'"
 
     class RunResult {
         +int returncode
