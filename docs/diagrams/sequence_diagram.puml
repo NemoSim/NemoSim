@@ -1,0 +1,35 @@
+@startuml NemoSDK_Sequence_Compile_Run
+
+actor User
+participant "Examples/CLI" as CLI
+participant "BIUNetworkDefaults" as Defaults
+participant "Layer, Synapses" as Model
+participant "compile()" as Compiler
+participant "CompiledModel" as Compiled
+participant "NemoSimRunner" as Runner
+participant "NEMOSIM Binary" as Sim
+
+User -> CLI: Create network model
+CLI -> Defaults: BIUNetworkDefaults(...)
+CLI -> Model: Layer(size, Synapses(...))
+
+CLI -> Compiler: compile(defaults, layers, ...)
+Compiler -> Compiler: Validate defaults
+Compiler -> Compiler: Validate layers
+Compiler -> Compiler: Generate XML
+Compiler -> Compiler: Write artifacts
+Compiler -> Compiled: CompiledModel(config_path)
+Compiler --> CLI: return CompiledModel
+
+CLI -> Runner: NemoSimRunner(working_dir)
+CLI -> Runner: runner.run(compiled_model, check=True)
+Runner -> Runner: Prepare config.json path
+Runner -> Runner: Setup log paths
+Runner -> Sim: Execute NEMOSIM binary
+Sim --> Runner: Process result
+Runner -> Runner: Create RunResult
+Runner --> CLI: return RunResult
+
+CLI --> User: Display results
+
+@enduml
