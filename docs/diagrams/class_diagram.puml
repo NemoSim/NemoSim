@@ -1,0 +1,86 @@
+@startuml NemoSDK_Class_Diagram
+
+package "nemosdk.model" {
+  class BIUNetworkDefaults {
+    +VTh: Optional[float]
+    +RLeak: Optional[float]
+    +refractory: Optional[int]
+    +VDD: Optional[float]
+    +Cn: Optional[float]
+    +Cu: Optional[float]
+    +fclk: Optional[float]
+    +DSBitWidth: Optional[int]
+    +DSClockMHz: Optional[float]
+    +DSMode: Optional[str]
+    +validate(): None
+  }
+
+  class Synapses {
+    +rows: int
+    +cols: int
+    +weights: List[List[float]]
+    +validate(): None
+  }
+
+  class NeuronOverrideRange {
+    +start: int
+    +end: int
+    +VTh: Optional[float]
+    +RLeak: Optional[float]
+    +refractory: Optional[int]
+    +validate(layer_size: int): None
+  }
+
+  class NeuronOverride {
+    +index: int
+    +VTh: Optional[float]
+    +RLeak: Optional[float]
+    +refractory: Optional[int]
+    +validate(layer_size: int): None
+  }
+
+  class Layer {
+    +size: int
+    +synapses: Synapses
+    +ranges: List[NeuronOverrideRange]
+    +neurons: List[NeuronOverride]
+    +validate(): None
+  }
+}
+
+package "nemosdk.compiler" {
+  class CompiledModel {
+    -config_path: Path
+    +get_config_path(): Path
+  }
+  
+  note right of CompiledModel
+    Wrapper for compiled
+    model artifacts
+  end note
+}
+
+package "nemosdk.runner" {
+  class NemoSimRunner {
+    -working_dir: Path
+    -binary_path: Path
+    +run(config: CompiledModel | Path, check: bool = False): RunResult
+  }
+
+  class RunResult {
+    +returncode: int
+    +command: List[str]
+    +cwd: Path
+    +stdout_path: Path
+    +stderr_path: Path
+    +is_success: bool
+  }
+}
+
+Layer "1" *-- "1" Synapses : contains
+Layer "1" *-- "*" NeuronOverrideRange : contains
+Layer "1" *-- "*" NeuronOverride : contains
+NemoSimRunner ..> RunResult : returns
+NemoSimRunner ..> CompiledModel : uses
+
+@enduml
