@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
+import os
 import subprocess
 import datetime as _dt
 
@@ -40,12 +41,18 @@ class NemoSimRunner:
 
     - `working_dir` should be the simulator working directory (e.g., `bin/Linux`).
     - `binary_path` defaults to `working_dir / "NEMOSIM"` when not provided.
+      Can be overridden via the `NEMOSIM_BINARY` environment variable.
     - Logs are written under `working_dir/logs` with timestamped filenames.
     """
 
     def __init__(self, working_dir: Path, binary_path: Optional[Path] = None):
         self.working_dir = working_dir
-        self.binary_path = binary_path or (working_dir / "NEMOSIM")
+        if binary_path is not None:
+            self.binary_path = binary_path
+        elif os.getenv("NEMOSIM_BINARY"):
+            self.binary_path = Path(os.getenv("NEMOSIM_BINARY"))
+        else:
+            self.binary_path = working_dir / "NEMOSIM"
 
     def run(
         self,

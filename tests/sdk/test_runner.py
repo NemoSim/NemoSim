@@ -42,4 +42,56 @@ def test_runner_missing_binary_error(tmp_path: Path):
         pass
 
 
+def test_runner_env_var_binary_path(tmp_path: Path):
+    """Test that NEMOSIM_BINARY environment variable overrides default binary path."""
+    work = tmp_path / "Linux"
+    work.mkdir(parents=True)
+    custom_bin_dir = tmp_path / "custom_bin"
+    custom_bin_dir.mkdir(parents=True)
+    custom_binary = custom_bin_dir / "CUSTOM_NEMOSIM"
+    custom_binary.write_text("#!/usr/bin/env bash\necho 'Finished executing.'\n", encoding="utf-8")
+    os.chmod(custom_binary, 0o755)
+    
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+
+    # Set environment variable
+    os.environ["NEMOSIM_BINARY"] = str(custom_binary)
+    try:
+        runner = NemoSimRunner(working_dir=work)
+        assert runner.binary_path == custom_binary
+        res = runner.run(CompiledModel(config_path=cfg), check=True)
+        assert res.returncode == 0
+    finally:
+        # Clean up environment variable
+        os.environ.pop("NEMOSIM_BINARY", None)
+
+
+def test_runner_explicit_binary_overrides_env_var(tmp_path: Path):
+    """Test that explicit binary_path parameter takes precedence over environment variable."""
+    work = tmp_path / "Linux"
+    work.mkdir(parents=True)
+    explicit_binary = work / "EXPLICIT_NEMOSIM"
+    explicit_binary.write_text("#!/usr/bin/env bash\necho 'Finished executing.'\n", encoding="utf-8")
+    os.chmod(explicit_binary, 0o755)
+    
+    env_binary = tmp_path / "env_binary"
+    env_binary.write_text("#!/usr/bin/env bash\necho 'Should not use this'\n", encoding="utf-8")
+    os.chmod(env_binary, 0o755)
+    
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+
+    # Set environment variable
+    os.environ["NEMOSIM_BINARY"] = str(env_binary)
+    try:
+        runner = NemoSimRunner(working_dir=work, binary_path=explicit_binary)
+        assert runner.binary_path == explicit_binary
+        res = runner.run(CompiledModel(config_path=cfg), check=True)
+        assert res.returncode == 0
+    finally:
+        # Clean up environment variable
+        os.environ.pop("NEMOSIM_BINARY", None)
+
+
 

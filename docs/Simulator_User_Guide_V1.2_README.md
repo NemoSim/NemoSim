@@ -459,6 +459,13 @@ Do the following:
 
    The SDK automatically captures stdout and stderr to log files and returns a `RunResult` object with the process exit code.
 
+   **Binary Path Configuration:**
+
+   The simulator binary path can be configured in three ways (in order of precedence):
+   1. Explicit `binary_path` parameter: `NemoSimRunner(working_dir=Path("bin/Linux"), binary_path=Path("/custom/path"))`
+   2. `NEMOSIM_BINARY` environment variable: `export NEMOSIM_BINARY=/custom/path/to/nemosim`
+   3. Default: `working_dir / "NEMOSIM"` (e.g., `bin/Linux/NEMOSIM`)
+
 2. While the NemoSim is running, it will display progress messages on the screen, as demonstrated in **Example 3-1**. If an error occurs, an error or warning message will be displayed (for details, see Section 4).
 
    **Example 3-1: NemoSim Progress Messages**

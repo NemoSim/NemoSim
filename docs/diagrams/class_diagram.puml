@@ -64,8 +64,16 @@ package "nemosdk.runner" {
   class NemoSimRunner {
     -working_dir: Path
     -binary_path: Path
+    +__init__(working_dir: Path, binary_path: Optional[Path] = None)
     +run(config: CompiledModel | Path, check: bool = False): RunResult
   }
+  
+  note right of NemoSimRunner
+    binary_path resolution:
+    1. Explicit parameter
+    2. NEMOSIM_BINARY env var
+    3. Default: working_dir / "NEMOSIM"
+  end note
 
   class RunResult {
     +returncode: int

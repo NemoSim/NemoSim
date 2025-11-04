@@ -85,6 +85,10 @@ cfg_path = compile_model(
 from nemosdk.runner import NemoSimRunner
 result = NemoSimRunner(working_dir=Path("bin/Linux")).run(cfg_path, check=True)
 print("OK:", result.returncode)
+
+# Optional: Override binary path via environment variable or explicit parameter
+# export NEMOSIM_BINARY=/custom/path/to/nemosim
+# Or: NemoSimRunner(working_dir=Path("bin/Linux"), binary_path=Path("/custom/path"))
 ```
 
 Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
@@ -123,9 +127,19 @@ Artifacts are written under `examples/out/...` and paths are relativized to `bin
 
 ### 🏃 Simulator Expectations
 
-- Binary must exist at `bin/Linux/NEMOSIM`
+- Binary must exist at `bin/Linux/NEMOSIM` (default) or as specified
 - Use `NemoSimRunner(working_dir=Path("bin/Linux"))`
+- Binary path resolution priority:
+  1. Explicit `binary_path` parameter (if provided)
+  2. `NEMOSIM_BINARY` environment variable (if set)
+  3. Default: `working_dir / "NEMOSIM"`
 - Logs are captured under `bin/Linux/logs`
+
+**Example: Using environment variable to override binary path:**
+```bash
+export NEMOSIM_BINARY=/path/to/custom/nemosim
+python your_script.py
+```
 
 ### 📁 Paths Policy
 
