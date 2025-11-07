@@ -80,6 +80,7 @@ layer = Layer(
             [5.0, 6.0],
         ],
     ),
+    probe="layer_name",  # Optional: assign a name for easy data access
 )
 ```
 
@@ -87,6 +88,68 @@ Common validation errors:
 
 - `size` must equal `rows`.
 - `weights` must provide exactly `rows` lists, each with exactly `cols` numbers.
+
+### Layer Probes (optional)
+
+Assign an optional `probe` name to layers to easily access their output data after simulation without manually tracking layer indices or opening files.
+
+```python
+# Define layers with probes
+input_layer = Layer(
+    size=3,
+    synapses=Synapses(rows=3, cols=8, weights=[[...]]),
+    probe="input",  # Name this layer "input"
+)
+
+output_layer = Layer(
+    size=7,
+    synapses=Synapses(rows=7, cols=3, weights=[[...]]),
+    probe="output",  # Name this layer "output"
+)
+
+# Compile the model
+compiled = compile_model(
+    defaults=defaults,
+    layers=[input_layer, output_layer],
+    out_dir=out_dir,
+    data_input_file=data_file,
+)
+
+# After running the simulation
+runner = NemoSimRunner(working_dir=Path("bin/Linux"))
+runner.run(compiled, check=True)
+
+# Access data by probe name (no need to remember layer indices!)
+input_probe = compiled.get_probe("input")
+output_probe = compiled.get_probe("output")
+
+# Get data for specific neurons
+spikes_0 = input_probe.get_spikes(0)  # Spike data for neuron 0
+vin_0 = output_probe.get_vin(0)       # Input voltage for neuron 0
+vns_0 = output_probe.get_vns(0)       # Neural state for neuron 0
+
+# Get data for all neurons in a layer
+all_spikes = output_probe.get_all_spikes()  # Dict[neuron_idx, List[spike_values]]
+all_vin = output_probe.get_all_vin()        # Dict[neuron_idx, List[voltage_values]]
+all_vns = output_probe.get_all_vns()        # Dict[neuron_idx, List[state_values]]
+
+# List available probes
+available = compiled.list_probes()  # ["input", "output"]
+```
+
+Probe features:
+
+- **Optional**: Layers without probes work as before
+- **Unique names**: Each probe name must be unique across all layers (validated at compile time)
+- **Easy data access**: No need to construct file paths like `spikes_{layer_idx}_{neuron_idx}.txt`
+- **Type safety**: Returns properly typed data (int for spikes, float for voltages)
+- **Error handling**: Clear error messages if probe name doesn't exist or output files are missing
+
+Benefits:
+
+- Makes post-simulation analysis cleaner and more readable
+- Reduces errors from incorrect layer indices or file paths
+- Self-documenting: probe names describe what each layer represents
 
 ### Per‑neuron overrides and precedence
 

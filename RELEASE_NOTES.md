@@ -1,5 +1,50 @@
 ## NemoSim / NemoSDK Release Notes
 
+### v0.2.0 (Alpha) — 2025-11-07
+
+Status: Alpha. New probe feature for easy data access; backward compatible with existing code.
+
+#### Added
+- **Layer Probes**: Optional probe names for layers to access simulation data without manual file handling
+  - New `probe` field on `Layer` class (optional string)
+  - `LayerProbe` class for reading layer output data by probe name
+  - `CompiledModel.get_probe(name)` to access layer data after simulation
+  - `CompiledModel.list_probes()` to list all available probes
+  - Methods on `LayerProbe`:
+    - `get_spikes(neuron_idx)` - Get spike data for a specific neuron
+    - `get_vin(neuron_idx)` - Get synapse input voltage data
+    - `get_vns(neuron_idx)` - Get neural state potential data
+    - `get_all_spikes()` - Get spike data for all neurons in the layer
+    - `get_all_vin()` - Get input voltage data for all neurons
+    - `get_all_vns()` - Get neural state data for all neurons
+- Comprehensive test suite for probe functionality (`tests/sdk/test_probes.py`)
+- Example demonstrating probe usage (`examples/build_with_probes.py`)
+
+#### Changed
+- Probe names must be unique across all layers (validated at compile time)
+- Enhanced error messages for missing probe names and files
+
+#### Benefits
+- No need to manually construct output file paths or track layer indices
+- Clean API for accessing simulation results: `compiled.get_probe("layer_name").get_spikes(0)`
+- Backward compatible: probes are optional; existing code works unchanged
+
+#### Example Usage
+```python
+# Define layers with probes
+layer0 = Layer(size=3, synapses=Synapses(...), probe="input")
+layer1 = Layer(size=7, synapses=Synapses(...), probe="output")
+
+# Compile and run
+compiled = compile(defaults, [layer0, layer1], out_dir=out_dir, ...)
+runner.run(compiled)
+
+# Access data by probe name
+input_probe = compiled.get_probe("input")
+spikes = input_probe.get_spikes(0)  # Get spikes for neuron 0
+all_spikes = input_probe.get_all_spikes()  # Get all spikes for the layer
+```
+
 ### v0.1.1 (Alpha) — 2025-10-30
 
 Status: Alpha. Developer‑experience updates; no breaking runtime changes expected.
