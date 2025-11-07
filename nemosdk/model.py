@@ -98,11 +98,18 @@ class Layer:
     - size > 0
     - synapses.rows == size
     - ranges and neurons within [0, size-1] with start <= end
+    - probe must be unique across layers (enforced at compile time)
     """
     size: int
     synapses: Synapses
     ranges: List[NeuronOverrideRange] = field(default_factory=list)
     neurons: List[NeuronOverride] = field(default_factory=list)
+    probe: Optional[str] = None
+    """Optional probe name for easy access to layer data after simulation.
+    
+    If provided, allows accessing layer output data (spikes, vin, vns) by name
+    without needing to know the layer index or manually open files.
+    """
 
     def validate(self) -> None:
         if self.size <= 0:

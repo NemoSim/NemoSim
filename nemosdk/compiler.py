@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 import xml.etree.ElementTree as ET
 import json
 
@@ -163,6 +163,17 @@ def compile(
     - If `out_dir` is provided: writes `biu.xml`, optional `supervisor.xml`, and
       `config.json`, then returns a `CompiledModel` with the config path.
     """
+    # Validate probe uniqueness
+    probe_to_layer: Dict[str, int] = {}
+    for layer_idx, layer in enumerate(layers):
+        if layer.probe is not None:
+            if layer.probe in probe_to_layer:
+                raise ValueError(
+                    f"Duplicate probe name '{layer.probe}': "
+                    f"used by layer {probe_to_layer[layer.probe]} and layer {layer_idx}"
+                )
+            probe_to_layer[layer.probe] = layer_idx
+
     biu_xml, sup_xml = compile_to_xml(
         defaults=defaults,
         layers=layers,
@@ -193,20 +204,180 @@ def compile(
     )
     cfg_path = out_dir / "config.json"
     write_json(cfg_path, cfg)
-    return CompiledModel(config_path=cfg_path)
+    return CompiledModel(config_path=cfg_path, probe_to_layer=probe_to_layer)
+
+
+class LayerProbe:
+    """Provides easy access to layer output data by probe name.
+    
+    After a simulation run, use this to access spikes, vin, and vns data
+    for a specific layer without manually opening files.
+    """
+    
+    def __init__(self, layer_idx: int, output_dir: Path):
+        """Initialize a layer probe.
+        
+        Args:
+            layer_idx: The layer index (0-based)
+            output_dir: Path to the simulation output directory
+        """
+        self.layer_idx = layer_idx
+        self.output_dir = output_dir
+    
+    def get_spikes(self, neuron_idx: int) -> list[int]:
+        """Get spike data for a specific neuron in this layer.
+        
+        Args:
+            neuron_idx: Neuron index within the layer (0-based)
+            
+        Returns:
+            List of spike values (0 or 1) for each time step
+        """
+        spike_file = self.output_dir / f"spikes_{self.layer_idx}_{neuron_idx}.txt"
+        if not spike_file.exists():
+            raise FileNotFoundError(f"Spike file not found: {spike_file}")
+        with spike_file.open() as f:
+            return [int(line.strip()) for line in f if line.strip()]
+    
+    def get_vin(self, neuron_idx: int) -> list[float]:
+        """Get synapse input voltage data for a specific neuron.
+        
+        Args:
+            neuron_idx: Neuron index within the layer (0-based)
+            
+        Returns:
+            List of input voltage values for each time step
+        """
+        vin_file = self.output_dir / f"vin_{self.layer_idx}_{neuron_idx}.txt"
+        if not vin_file.exists():
+            raise FileNotFoundError(f"Vin file not found: {vin_file}")
+        with vin_file.open() as f:
+            return [float(line.strip()) for line in f if line.strip()]
+    
+    def get_vns(self, neuron_idx: int) -> list[float]:
+        """Get neural state potential data for a specific neuron.
+        
+        Args:
+            neuron_idx: Neuron index within the layer (0-based)
+            
+        Returns:
+            List of neural state potential values for each time step
+        """
+        vns_file = self.output_dir / f"vns_{self.layer_idx}_{neuron_idx}.txt"
+        if not vns_file.exists():
+            raise FileNotFoundError(f"Vns file not found: {vns_file}")
+        with vns_file.open() as f:
+            return [float(line.strip()) for line in f if line.strip()]
+    
+    def get_all_spikes(self) -> Dict[int, list[int]]:
+        """Get spike data for all neurons in this layer.
+        
+        Returns:
+            Dictionary mapping neuron index to list of spike values
+        """
+        result: Dict[int, list[int]] = {}
+        spike_files = sorted(self.output_dir.glob(f"spikes_{self.layer_idx}_*.txt"))
+        for spike_file in spike_files:
+            # Extract neuron index from filename: spikes_<layer>_<neuron>.txt
+            parts = spike_file.stem.split("_")
+            if len(parts) == 3:
+                neuron_idx = int(parts[2])
+                result[neuron_idx] = self.get_spikes(neuron_idx)
+        return result
+    
+    def get_all_vin(self) -> Dict[int, list[float]]:
+        """Get input voltage data for all neurons in this layer.
+        
+        Returns:
+            Dictionary mapping neuron index to list of input voltage values
+        """
+        result: Dict[int, list[float]] = {}
+        vin_files = sorted(self.output_dir.glob(f"vin_{self.layer_idx}_*.txt"))
+        for vin_file in vin_files:
+            # Extract neuron index from filename: vin_<layer>_<neuron>.txt
+            parts = vin_file.stem.split("_")
+            if len(parts) == 3:
+                neuron_idx = int(parts[2])
+                result[neuron_idx] = self.get_vin(neuron_idx)
+        return result
+    
+    def get_all_vns(self) -> Dict[int, list[float]]:
+        """Get neural state potential data for all neurons in this layer.
+        
+        Returns:
+            Dictionary mapping neuron index to list of neural state potential values
+        """
+        result: Dict[int, list[float]] = {}
+        vns_files = sorted(self.output_dir.glob(f"vns_{self.layer_idx}_*.txt"))
+        for vns_file in vns_files:
+            # Extract neuron index from filename: vns_<layer>_<neuron>.txt
+            parts = vns_file.stem.split("_")
+            if len(parts) == 3:
+                neuron_idx = int(parts[2])
+                result[neuron_idx] = self.get_vns(neuron_idx)
+        return result
 
 
 class CompiledModel:
-    """A compiled, runnable model artifact exposing a config path.
+    """A compiled, runnable model artifact exposing a config path and probe access.
 
-    This wrapper keeps the runner interface stable without exposing raw paths.
+    This wrapper keeps the runner interface stable without exposing raw paths,
+    and provides easy access to layer data via probe names.
     """
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, probe_to_layer: Optional[Dict[str, int]] = None):
+        """Initialize a compiled model.
+        
+        Args:
+            config_path: Path to the config.json file
+            probe_to_layer: Optional mapping from probe names to layer indices
+        """
         self.config_path = config_path
+        self.probe_to_layer: Dict[str, int] = probe_to_layer or {}
 
     def get_config_path(self) -> Path:
+        """Get the path to the config.json file."""
         return self.config_path
+    
+    def get_probe(self, probe_name: str) -> LayerProbe:
+        """Get a LayerProbe for accessing data by probe name.
+        
+        Args:
+            probe_name: The probe name assigned to a layer
+            
+        Returns:
+            LayerProbe instance for accessing the layer's output data
+            
+        Raises:
+            KeyError: If the probe name is not found
+            FileNotFoundError: If the output directory doesn't exist
+        """
+        if probe_name not in self.probe_to_layer:
+            raise KeyError(
+                f"Probe '{probe_name}' not found. Available probes: {list(self.probe_to_layer.keys())}"
+            )
+        
+        # Read config.json to get output directory
+        with self.config_path.open() as f:
+            config = json.load(f)
+        
+        output_dir = Path(config.get("output_directory", ""))
+        if not output_dir.exists():
+            raise FileNotFoundError(
+                f"Output directory not found: {output_dir}. "
+                "Simulation may not have been run yet."
+            )
+        
+        layer_idx = self.probe_to_layer[probe_name]
+        return LayerProbe(layer_idx=layer_idx, output_dir=output_dir)
+    
+    def list_probes(self) -> list[str]:
+        """List all available probe names.
+        
+        Returns:
+            List of probe names that can be used with get_probe()
+        """
+        return list(self.probe_to_layer.keys())
 
 
 def build_run_config(

@@ -21,7 +21,7 @@ For background on the NEMO consortium and platform objectives, visit the project
 ### 🧰 Public API (Python‑first)
 - Model primitives
   - `BIUNetworkDefaults`: global defaults (threshold, leak, refractory, DS settings, etc.)
-  - `Layer(size, synapses, ranges=[], neurons=[])`
+  - `Layer(size, synapses, ranges=[], neurons=[], probe=None)` — optional `probe` for easy data access
   - `Synapses(rows, cols, weights)`
   - `NeuronOverrideRange(start, end, VTh=?, RLeak=?, refractory=?)`
   - `NeuronOverride(index, VTh=?, RLeak=?, refractory=?)`
@@ -29,6 +29,13 @@ For background on the NEMO consortium and platform objectives, visit the project
   - `compile(defaults, layers, include_supervisor=False)` → compile
   - `build_run_config(...)` → internal runner config (usually used via examples/CLI)
   - `NemoSimRunner(working_dir).run(config_json_path)` → executes the simulator and captures logs
+- Data access (probes)
+  - `CompiledModel.get_probe(name)` → get LayerProbe for accessing simulation data
+  - `CompiledModel.list_probes()` → list all available probe names
+  - `LayerProbe.get_spikes(neuron_idx)` → get spike data for a neuron
+  - `LayerProbe.get_vin(neuron_idx)` → get input voltage data
+  - `LayerProbe.get_vns(neuron_idx)` → get neural state data
+  - `LayerProbe.get_all_spikes()` → get all spikes for the layer
 - CLI (optional): `python -m nemosdk.cli` (`build`, `run`, `diag`)
 
 ### 🧩 Concepts (SDK view)
@@ -57,6 +64,8 @@ For background on the NEMO consortium and platform objectives, visit the project
 - Multilayer + override precedence: `python examples/build_multilayer_precedence.py`
 - DS interface variants: `python examples/build_ds_variants.py`
 - With energy tables: `python examples/build_with_energy_tables.py`
+- With layer probes (easy data access): `python examples/build_with_probes.py`
+- With plotting: `python examples/build_with_plotting.py`
 
 All examples define networks with the Python API, compile, and run the simulator automatically.
 
@@ -65,26 +74,29 @@ All examples define networks with the Python API, compile, and run the simulator
 ```python
 from pathlib import Path
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses
-from nemosdk.compiler import compile, build_run_config, write_text, write_json
+from nemosdk.compiler import compile as compile_model
 from nemosdk.runner import NemoSimRunner
 
-# 1) Define a minimal network
+# 1) Define a minimal network with optional probe
 defaults = BIUNetworkDefaults(VTh=0.9, refractory=14, DSBitWidth=8, DSClockMHz=50)
-layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[7.0]]))]
+layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[7.0]]), probe="output")]
 
 # 2) Two lines: compile, then run
-from nemosdk.compiler import compile as compile_model
 out = Path("examples/out/quickstart")
-cfg_path = compile_model(
+compiled = compile_model(
     defaults=defaults,
     layers=layers,
     out_dir=out,
     data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
 )
 
-from nemosdk.runner import NemoSimRunner
-result = NemoSimRunner(working_dir=Path("bin/Linux")).run(cfg_path, check=True)
+result = NemoSimRunner(working_dir=Path("bin/Linux")).run(compiled, check=True)
 print("OK:", result.returncode)
+
+# 3) Access simulation data by probe name (no manual file handling!)
+probe = compiled.get_probe("output")
+spikes = probe.get_spikes(0)  # Get spikes for neuron 0
+print(f"Neuron 0 fired {sum(spikes)} times")
 
 # Optional: Override binary path via environment variable or explicit parameter
 # export NEMOSIM_BINARY=/custom/path/to/nemosim

@@ -22,6 +22,7 @@ from .compiler import (
     build_run_config,
     compile_and_write,
     CompiledModel,
+    LayerProbe,
 )
 from .runner import NemoSimRunner, RunResult
 
@@ -36,6 +37,7 @@ __all__ = [
     "build_run_config",
     "compile_and_write",
     "CompiledModel",
+    "LayerProbe",
     "NemoSimRunner",
     "RunResult",
 ]
