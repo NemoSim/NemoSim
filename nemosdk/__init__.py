@@ -23,8 +23,10 @@ from .compiler import (
     compile_and_write,
     CompiledModel,
     LayerProbe,
+    ProbeMetadata,
 )
 from .runner import NemoSimRunner, RunResult
+from .probe_utils import watch_probe
 
 __all__ = [
     "BIUNetworkDefaults",
@@ -38,8 +40,10 @@ __all__ = [
     "compile_and_write",
     "CompiledModel",
     "LayerProbe",
+    "ProbeMetadata",
     "NemoSimRunner",
     "RunResult",
+    "watch_probe",
 ]
 
 

@@ -17,16 +17,26 @@ Status: Alpha. New probe feature for easy data access; backward compatible with 
     - `get_all_spikes()` - Get spike data for all neurons in the layer
     - `get_all_vin()` - Get input voltage data for all neurons
     - `get_all_vns()` - Get neural state data for all neurons
+- Advanced probe helpers:
+  - `LayerProbe.iter_spikes/iter_vin/iter_vns` for chunked streaming
+  - `LayerProbe.to_dataframe(...)` (optional pandas dependency) for notebook/table workflows
+  - `LayerProbe.list_neuron_indices()` to discover available neuron ids
+- Real-time monitoring via `watch_probe(probe, signal, neuron_idx, follow=True)`
+- Artifact metadata: `probes.json` is emitted next to `config.json` with probe → layer mappings
+- CLI: new `nemosdk probe` subcommand (`--list`, `--probe`, `--signal`, `--head`, `--follow`, `--max-events`) for quick terminal inspection
 - Comprehensive test suite for probe functionality (`tests/sdk/test_probes.py`)
+- Dedicated CLI probe tests (`tests/sdk/test_cli_probe.py`)
 - Example demonstrating probe usage (`examples/build_with_probes.py`)
 
 #### Changed
 - Probe names must be unique across all layers (validated at compile time)
 - Enhanced error messages for missing probe names and files
+- Documentation updates covering probe workflow, CLI usage, pandas integration, and best practices (README + `docs/BIUNetwork_Configuration.md`)
 
 #### Benefits
 - No need to manually construct output file paths or track layer indices
 - Clean API for accessing simulation results: `compiled.get_probe("layer_name").get_spikes(0)`
+- Rich analysis tooling: chunked streaming, DataFrame export, CLI inspection, and live tailing via `watch_probe`
 - Backward compatible: probes are optional; existing code works unchanged
 
 #### Example Usage

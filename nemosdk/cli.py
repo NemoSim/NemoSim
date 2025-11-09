@@ -15,6 +15,7 @@ import sys
 from .compiler import compile as compile_model, build_run_config, write_text, write_json, CompiledModel
 from .model import BIUNetworkDefaults, Layer, Synapses
 from .runner import NemoSimRunner
+from .probe_utils import watch_probe
 
 
 def _write_artifacts(args: argparse.Namespace) -> None:
@@ -77,6 +78,89 @@ def _diag(args: argparse.Namespace) -> None:
         print(base / p)
 
 
+def _probe_inspect(args: argparse.Namespace) -> None:
+    """Inspect probe outputs from a compiled model."""
+    compiled = CompiledModel(config_path=Path(args.config))
+
+    if args.list:
+        probes = compiled.list_probes()
+        if not probes:
+            print("No probes found in probes.json")
+            return
+        print("Available probes:")
+        for name in probes:
+            try:
+                meta = compiled.get_probe_metadata(name)
+                layer_index = meta.layer_index
+                size = meta.layer_size
+            except KeyError:
+                layer_index = compiled.get_probe_layer_index(name)
+                size = "?"
+            print(f"  - {name} (layer {layer_index}, neurons={size})")
+        return
+
+    if not args.probe:
+        raise SystemExit("--probe is required unless --list is specified")
+
+    probe = compiled.get_probe(args.probe)
+    try:
+        meta = compiled.get_probe_metadata(args.probe)
+        default_neurons = list(range(meta.layer_size))
+    except KeyError:
+        default_neurons = probe.list_neuron_indices()
+
+    neuron_indices = args.neurons if args.neurons else default_neurons
+    if not neuron_indices:
+        print("No neuron indices resolved for this probe.")
+        return
+
+    signal = args.signal
+    getter = {
+        "spikes": probe.get_spikes,
+        "vin": probe.get_vin,
+        "vns": probe.get_vns,
+    }[signal]
+
+    if args.follow:
+        print(f"Following {signal} for probe '{args.probe}', neurons={neuron_indices} (Ctrl+C to stop)")
+        try:
+            for neuron_idx in neuron_indices:
+                for value in watch_probe(
+                    probe,
+                    signal,
+                    neuron_idx,
+                    follow=True,
+                    poll_interval=args.poll_interval,
+                    max_events=args.max_events,
+                ):
+                    print(f"[{signal}] neuron {neuron_idx}: {value}")
+        except KeyboardInterrupt:
+            print("\nStopped following.")
+        return
+
+    for neuron_idx in neuron_indices:
+        data = getter(neuron_idx)
+        if args.head is not None:
+            data = data[: args.head]
+
+        if args.summary:
+            count = len(data)
+            if count == 0:
+                print(f"[{signal}] neuron {neuron_idx}: empty")
+                continue
+            minimum = min(data)
+            maximum = max(data)
+            average = sum(data) / count
+            extra = ""
+            if signal == "spikes":
+                extra = f", spikes={sum(int(v) for v in data)}"
+            print(
+                f"[{signal}] neuron {neuron_idx}: count={count}, min={minimum}, max={maximum}, mean={average:.4f}{extra}"
+            )
+        else:
+            print(f"[{signal}] neuron {neuron_idx}: {data}")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="nemosdk", description="NemoSDK CLI: build/compile/run/diagnose")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -108,6 +192,36 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--sim-workdir", required=True)
     d.add_argument("path")
     d.set_defaults(func=_diag)
+
+    p = sub.add_parser("probe", help="Inspect simulation outputs via probe names")
+    p.add_argument("config", help="Path to config.json produced by the SDK")
+    p.add_argument("--list", action="store_true", help="List available probes and exit")
+    p.add_argument("--probe", help="Probe name to inspect")
+    p.add_argument("--signal", choices=("spikes", "vin", "vns"), default="spikes")
+    p.add_argument("--neurons", type=int, nargs="*", help="Neuron indices to include (defaults to all)")
+    p.add_argument("--head", type=int, help="Show only the first N samples")
+    p.add_argument(
+        "--summary",
+        action="store_true",
+        help="Print summary statistics (count/min/max/mean) instead of raw samples",
+    )
+    p.add_argument(
+        "--follow",
+        action="store_true",
+        help="Tail the signal file(s) until interrupted (like `tail -f`)",
+    )
+    p.add_argument(
+        "--poll-interval",
+        type=float,
+        default=0.5,
+        help="Polling interval in seconds when --follow is used (default: 0.5)",
+    )
+    p.add_argument(
+        "--max-events",
+        type=int,
+        help="Optional maximum number of samples to emit when using --follow",
+    )
+    p.set_defaults(func=_probe_inspect)
 
     ns = ap.parse_args(argv)
     ns.func(ns)
