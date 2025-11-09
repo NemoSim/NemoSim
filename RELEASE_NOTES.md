@@ -1,5 +1,19 @@
 ## NemoSim / NemoSDK Release Notes
 
+### v0.2.1 (Alpha) — 2025-11-09
+
+Status: Alpha. Example improvements to guarantee spiking activity and added regression tests.
+
+#### Added
+- Inline input example now ships with supervisor parameters and lower threshold so neurons fire without manual tuning (`examples/build_with_inline_input.py`)
+- Probe example updated to include supervisor defaults for consistent output files (`examples/build_with_probes.py`)
+- Integration tests covering both examples to guard regression (`tests/sdk/test_examples.py`)
+- Release notes updated to document the inline input workflow
+
+#### Changed
+- No API changes; examples now reuse shared hyperparameters to ensure generated artifacts contain spikes
+- Documentation refreshed to mention the inline-input tuning
+
 ### v0.2.0 (Alpha) — 2025-11-07
 
 Status: Alpha. New probe feature for easy data access; backward compatible with existing code.
@@ -25,9 +39,6 @@ Status: Alpha. New probe feature for easy data access; backward compatible with 
 - Artifact metadata: `probes.json` is emitted next to `config.json` with probe → layer mappings
 - CLI: new `nemosdk probe` subcommand (`--list`, `--probe`, `--signal`, `--head`, `--follow`, `--max-events`) for quick terminal inspection
 - Provide input data programmatically via `input_data=[...]` (SDK writes `input.txt` automatically)
-  - Supports tuple/matrix samples; works with inline input example using supervisor defaults
-- Inline input example enhanced with supervisor parameters to ensure neurons fire out-of-the-box
-- New integration tests validating probe and inline-input examples (`tests/sdk/test_examples.py`)
 - New example `examples/build_with_inline_input.py` demonstrating inline stimulus use
 - Comprehensive test suite for probe functionality (`tests/sdk/test_probes.py`)
 - Dedicated CLI probe tests (`tests/sdk/test_cli_probe.py`)
