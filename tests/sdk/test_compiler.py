@@ -3,9 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import json
+import pytest
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverride, NeuronOverrideRange
-from nemosdk.compiler import compile as compile_model, build_run_config
+from nemosdk.compiler import compile as compile_model, build_run_config, compile_and_write
 
 
 def test_compile_minimal_xml_roundtrip(tmp_path: Path):
@@ -73,5 +74,88 @@ def test_build_run_config_absolute_paths(tmp_path: Path):
     assert cfg["output_directory"].startswith("/")
     assert cfg["data_input_file"].startswith("/")
 
+
+def test_compile_with_input_data(tmp_path: Path):
+    defaults = BIUNetworkDefaults()
+    layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]))]
+    out_dir = tmp_path / "artifacts"
+
+    compiled = compile_model(
+        defaults=defaults,
+        layers=layers,
+        out_dir=out_dir,
+        input_data=[0, 1, 1, 0],
+    )
+
+    config = json.loads(compiled.get_config_path().read_text())
+    input_path = Path(config["data_input_file"])
+    assert input_path.exists()
+    assert input_path.read_text().strip().splitlines() == ["0", "1", "1", "0"]
+
+
+def test_compile_input_data_requires_out_dir(tmp_path: Path):
+    defaults = BIUNetworkDefaults()
+    layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]))]
+    with pytest.raises(ValueError):
+        compile_model(defaults=defaults, layers=layers, input_data=[0, 1])
+
+
+def test_compile_rejects_both_input_file_and_data(tmp_path: Path):
+    defaults = BIUNetworkDefaults()
+    layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]))]
+    out_dir = tmp_path / "artifacts"
+    data_path = tmp_path / "input.txt"
+    data_path.write_text("0\n")
+    with pytest.raises(ValueError):
+        compile_model(
+            defaults=defaults,
+            layers=layers,
+            out_dir=out_dir,
+            data_input_file=data_path,
+            input_data=[0, 1],
+        )
+
+
+def test_compile_and_write_input_data(tmp_path: Path):
+    defaults = BIUNetworkDefaults()
+    layers = [Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[2.0]]))]
+    out_dir = tmp_path / "bundle"
+    cfg = compile_and_write(
+        defaults=defaults,
+        layers=layers,
+        out_dir=out_dir,
+        input_data=[1, 2, 3],
+    )
+    input_path = Path(cfg["data_input_file"])
+    assert input_path.exists()
+    assert input_path.read_text().strip().splitlines() == ["1", "2", "3"]
+
+
+def test_compile_input_multi_column(tmp_path: Path):
+    defaults = BIUNetworkDefaults()
+    layers = [
+        Layer(
+            size=2,
+            synapses=Synapses(
+                rows=2,
+                cols=2,
+                weights=[
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                ],
+            ),
+        )
+    ]
+    out_dir = tmp_path / "multi"
+    compiled = compile_model(
+        defaults=defaults,
+        layers=layers,
+        out_dir=out_dir,
+        input_data=[(1, 2), (3, 4), (5, 6)],
+    )
+    config = json.loads(compiled.get_config_path().read_text())
+    input_path = Path(config["data_input_file"])
+    lines = input_path.read_text().strip().splitlines()
+    assert lines == ["1 2", "3 4", "5 6"]
 
 

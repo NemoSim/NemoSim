@@ -22,6 +22,21 @@ result = runner.run(config_path, check=True)
 
 Artifacts are written under `out_dir`. All paths in the generated `config.json` are absolute.
 
+**Providing input data directly:**
+
+```python
+input_samples = [0, 1, 0, 1]
+
+config_path = compile_model(
+    defaults=defaults,
+    layers=layers,
+    out_dir=out_dir,
+    input_data=input_samples,  # writes input.txt automatically
+)
+```
+
+`input_data` is only supported when `out_dir` is supplied; the SDK writes `input.txt` into the output directory and references it from the generated `config.json`.
+
 ### Global network defaults: `BIUNetworkDefaults`
 
 These are applied to all neurons unless overridden at the layer or per‑neuron level.

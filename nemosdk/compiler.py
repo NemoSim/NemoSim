@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from collections.abc import Iterable as IterableABC
 from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, Union, cast
 import xml.etree.ElementTree as ET
 import json
@@ -203,6 +204,7 @@ def compile(
     # Optional artifact writing in one step for a 2-line compile→run flow
     out_dir: Optional[Path] = None,
     data_input_file: Optional[Path] = None,
+    input_data: Optional[Iterable[int | float]] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> Union[tuple[str, Optional[str]], "CompiledModel"]:
@@ -214,6 +216,11 @@ def compile(
     - If `out_dir` is provided: writes `biu.xml`, optional `supervisor.xml`, and
       `config.json`, then returns a `CompiledModel` with the config path.
     """
+    if input_data is not None and out_dir is None:
+        raise ValueError("input_data requires out_dir to be provided")
+    if input_data is not None and data_input_file is not None:
+        raise ValueError("Provide either data_input_file or input_data, not both")
+
     # Validate probe uniqueness and persist metadata
     probe_to_layer, probe_metadata = _collect_probe_metadata(layers)
 
@@ -235,12 +242,21 @@ def compile(
         sup_xml_path = out_dir / "supervisor.xml"
         write_text(sup_xml_path, sup_xml)
 
-    if data_input_file is None:
-        raise ValueError("data_input_file must be provided when out_dir is specified")
+    input_path: Optional[Path] = None
+    if input_data is not None:
+        input_path = out_dir / "input.txt"
+        write_input_data(input_path, input_data)
+    elif data_input_file is not None:
+        input_path = Path(data_input_file)
+    if input_path is None:
+        raise ValueError(
+            "data_input_file must be provided when out_dir is specified (or supply input_data)"
+        )
+
     cfg = build_run_config(
         output_directory=out_dir / "output",
         xml_config_path=biu_xml_path,
-        data_input_file=data_input_file,
+        data_input_file=input_path,
         sup_xml_config_path=sup_xml_path,
         synapses_energy_table_path=synapses_energy_table_path,
         neuron_energy_table_path=neuron_energy_table_path,
@@ -622,6 +638,29 @@ def build_run_config(
     return cfg
 
 
+Number = Union[int, float]
+
+
+def write_input_data(path: Path, data: Iterable[Union[Number, Iterable[Number]]]) -> None:
+    """Write input samples to ``path``.
+
+    Each entry can be:
+      - a single numeric value -> written as one value per line.
+      - an iterable of numeric values -> written space-separated on a single line.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        for value in data:
+            if isinstance(value, (str, bytes)):
+                fh.write(value.rstrip("\n") + "\n")
+            elif isinstance(value, IterableABC) and not isinstance(value, (int, float)):
+                line = " ".join(str(v) for v in value)
+                fh.write(f"{line}\n")
+            else:
+                fh.write(f"{value}\n")
+
+
 def write_text(path: Path, content: str) -> None:
     """Write UTF‑8 text to `path`, creating parent directories as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -644,7 +683,8 @@ def compile_and_write(
     defaults: BIUNetworkDefaults,
     layers: list[Layer],
     out_dir: Path,
-    data_input_file: Path,
+    data_input_file: Optional[Path] = None,
+    input_data: Optional[Iterable[int | float]] = None,
     include_supervisor: bool = False,
     supervisor_defaults: Optional[BIUNetworkDefaults] = None,
     synapses_energy_table_path: Optional[Path] = None,
@@ -655,6 +695,9 @@ def compile_and_write(
     Writes `biu.xml`, optional `supervisor.xml`, and `config.json` into `out_dir`.
     Returns the in‑memory config dict used for `config.json`.
     """
+    if input_data is not None and data_input_file is not None:
+        raise ValueError("Provide either data_input_file or input_data, not both")
+
     probe_to_layer, probe_metadata = _collect_probe_metadata(layers)
 
     biu_xml, sup_xml = compile(
@@ -670,10 +713,18 @@ def compile_and_write(
         sup_xml_path = out_dir / "supervisor.xml"
         write_text(sup_xml_path, sup_xml)
 
+    if input_data is not None:
+        input_path = out_dir / "input.txt"
+        write_input_data(input_path, input_data)
+    elif data_input_file is not None:
+        input_path = Path(data_input_file)
+    else:
+        raise ValueError("data_input_file must be provided (or supply input_data)")
+
     cfg = build_run_config(
         output_directory=out_dir / "output",
         xml_config_path=biu_xml_path,
-        data_input_file=data_input_file,
+        data_input_file=input_path,
         sup_xml_config_path=sup_xml_path,
         synapses_energy_table_path=synapses_energy_table_path,
         neuron_energy_table_path=neuron_energy_table_path,

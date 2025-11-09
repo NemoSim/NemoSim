@@ -24,6 +24,7 @@ from .compiler import (
     CompiledModel,
     LayerProbe,
     ProbeMetadata,
+    write_input_data,
 )
 from .runner import NemoSimRunner, RunResult
 from .probe_utils import watch_probe
@@ -41,6 +42,7 @@ __all__ = [
     "CompiledModel",
     "LayerProbe",
     "ProbeMetadata",
+    "write_input_data",
     "NemoSimRunner",
     "RunResult",
     "watch_probe",
