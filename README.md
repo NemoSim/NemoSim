@@ -29,6 +29,7 @@ For background on the NEMO consortium and platform objectives, visit the project
   - `compile(defaults, layers, include_supervisor=False)` → compile
   - `build_run_config(...)` → internal runner config (usually used via examples/CLI)
   - `NemoSimRunner(working_dir).run(config_json_path)` → executes the simulator and captures logs
+  - `write_input_data(path, iterable)` → convenience writer for simulator stimulus files
 - Data access (probes)
   - `CompiledModel.get_probe(name)` → get LayerProbe for accessing simulation data
   - `CompiledModel.list_probes()` → list all available probe names
@@ -69,6 +70,7 @@ For background on the NEMO consortium and platform objectives, visit the project
 - DS interface variants: `python examples/build_ds_variants.py`
 - With energy tables: `python examples/build_with_energy_tables.py`
 - With layer probes (easy data access): `python examples/build_with_probes.py`
+- With inline input samples: `python examples/build_with_inline_input.py`
 - With plotting: `python examples/build_with_plotting.py`
 
 All examples define networks with the Python API, compile, and run the simulator automatically.
@@ -132,6 +134,23 @@ print(f"Neuron 0 fired {sum(spikes)} times")
 ```
 
 💡 Need tabular analysis? Install pandas and call `probe.to_dataframe(...)` to obtain a tidy DataFrame for plotting or notebooks.
+
+#### Providing input data programmatically
+
+You don’t have to maintain a separate `input.txt` file. Supply an iterable of samples and the SDK will write it for you when `out_dir` is provided:
+
+```python
+input_samples = [0, 1, 0, 1, 0, 0, 1]
+
+compiled = compile_model(
+    defaults=defaults,
+    layers=layers,
+    out_dir=out,
+    input_data=input_samples,  # new helper: SDK writes input.txt automatically
+)
+```
+
+Internally, this emits `input.txt` in `out/input.txt` and points the generated `config.json` to it. Passing both `data_input_file` and `input_data` raises an error to prevent accidental inconsistencies.
 
 Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
 

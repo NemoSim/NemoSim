@@ -24,6 +24,8 @@ Status: Alpha. New probe feature for easy data access; backward compatible with 
 - Real-time monitoring via `watch_probe(probe, signal, neuron_idx, follow=True)`
 - Artifact metadata: `probes.json` is emitted next to `config.json` with probe → layer mappings
 - CLI: new `nemosdk probe` subcommand (`--list`, `--probe`, `--signal`, `--head`, `--follow`, `--max-events`) for quick terminal inspection
+- Provide input data programmatically via `input_data=[...]` (SDK writes `input.txt` automatically)
+- New example `examples/build_with_inline_input.py` demonstrating inline stimulus use
 - Comprehensive test suite for probe functionality (`tests/sdk/test_probes.py`)
 - Dedicated CLI probe tests (`tests/sdk/test_cli_probe.py`)
 - Example demonstrating probe usage (`examples/build_with_probes.py`)

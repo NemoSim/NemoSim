@@ -1,0 +1,14 @@
+{
+  "probes": [
+    {
+      "name": "input",
+      "layer_index": 0,
+      "layer_size": 3
+    },
+    {
+      "name": "output",
+      "layer_index": 1,
+      "layer_size": 7
+    }
+  ]
+}
