@@ -36,7 +36,11 @@ For background on the NEMO consortium and platform objectives, visit the project
   - `LayerProbe.get_vin(neuron_idx)` → get input voltage data
   - `LayerProbe.get_vns(neuron_idx)` → get neural state data
   - `LayerProbe.get_all_spikes()` → get all spikes for the layer
-- CLI (optional): `python -m nemosdk.cli` (`build`, `run`, `diag`)
+  - `LayerProbe.iter_spikes(neuron_idx, chunk_size=...)` → stream large outputs in chunks
+  - `LayerProbe.to_dataframe(...)` → optional pandas helper for analysis/plotting
+  - `LayerProbe.list_neuron_indices()` → discover available neuron ids
+  - `watch_probe(probe, signal, neuron_idx, follow=True)` → tail output files in real time
+- CLI (optional): `python -m nemosdk.cli` (`build`, `run`, `diag`, `probe`)
 
 ### 🧩 Concepts (SDK view)
 - Global defaults: set once in `BIUNetworkDefaults` (e.g., `VTh`, `RLeak`, `refractory`, DS settings).
@@ -68,6 +72,30 @@ For background on the NEMO consortium and platform objectives, visit the project
 - With plotting: `python examples/build_with_plotting.py`
 
 All examples define networks with the Python API, compile, and run the simulator automatically.
+
+### 🔍 Probe Workflow
+
+1. **Name your layers** – assign `probe="input"` / `"hidden_0"` / `"output"` when constructing each `Layer`.
+2. **Compile with `out_dir`** – the SDK emits `probes.json` alongside `config.json`, mapping probe names → layer metadata.
+3. **Inspect results in Python**:
+
+   ```python
+   compiled = compile_model(..., out_dir=out_dir, data_input_file=input_file)
+   probe = compiled.get_probe("output")
+
+   # Whole-layer helpers
+   spikes = probe.get_all_spikes()              # {neuron_idx: [0/1, ...]}
+   chunks = list(probe.iter_spikes(0, chunk_size=2048))  # stream large files
+
+   # Pandas integration (optional dependency)
+   df = probe.to_dataframe(neurons=[0, 1], signals=("spikes", "vin"))
+
+   # Quick summaries
+   print(probe.list_neuron_indices())  # [0, 1, 2, ...]
+   ```
+
+4. **Tail results during a run** – `watch_probe(probe, "spikes", 0, follow=True)` yields live samples.
+5. **Use the CLI for ad-hoc inspection** – `python -m nemosdk.cli probe config.json --list` or `--probe output --signal vin --head 10`.
 
 ### ⚡ Quick Start (Python)
 
@@ -102,6 +130,8 @@ print(f"Neuron 0 fired {sum(spikes)} times")
 # export NEMOSIM_BINARY=/custom/path/to/nemosim
 # Or: NemoSimRunner(working_dir=Path("bin/Linux"), binary_path=Path("/custom/path"))
 ```
+
+💡 Need tabular analysis? Install pandas and call `probe.to_dataframe(...)` to obtain a tidy DataFrame for plotting or notebooks.
 
 Artifacts are written under `examples/out/...` and paths are relativized to `bin/Linux`.
 

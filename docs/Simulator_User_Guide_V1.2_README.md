@@ -492,6 +492,9 @@ Output files are plain text, each containing a list of numeric values (one per l
 
 **Note:** All output filenames use lowercase letters (e.g., `spikes_0_0.txt`, `vin_0_0.txt`, `vns_0_0.txt`).
 
+**Tip:** When using the Python SDK, you can inspect these outputs directly from the terminal with  
+`python -m nemosdk.cli probe config.json --list` or `--probe output --signal spikes --head 10`.
+
 After the output files have been generated, you can plot or analyze them to look for neurons with unexpected behaviors (for example, constant potentials or no spikes) for further debugging.
 
 Do one of the following:

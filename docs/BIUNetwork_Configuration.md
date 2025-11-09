@@ -151,6 +151,21 @@ Benefits:
 - Reduces errors from incorrect layer indices or file paths
 - Self-documenting: probe names describe what each layer represents
 
+#### Probe best practices
+
+- Use descriptive names per layer (e.g., `"input"`, `"hidden_1"`, `"output"`) to make analysis code self-explanatory.
+- `compile(..., out_dir=...)` automatically emits `probes.json` alongside `config.json`. This file maps probe names to layer indices/sizes for tooling such as the CLI.
+- Stream large outputs without loading everything at once:
+
+  ```python
+  for chunk in probe.iter_spikes(0, chunk_size=2048):
+      process(chunk)
+  ```
+
+- Need tabular data? Install pandas (`pip install pandas`) and call `probe.to_dataframe(...)` to obtain a tidy DataFrame ready for plotting.
+- Want quick, ad-hoc inspection? Use the CLI: `python -m nemosdk.cli probe config.json --probe output --signal vns --head 5`.
+- Monitor simulations in real time with `watch_probe(probe, "spikes", 0, follow=True)`, which tails the underlying output files.
+
 ### Per‑neuron overrides and precedence
 
 Override global defaults for ranges of neurons or individual neurons:
@@ -245,3 +260,4 @@ print("OK:", result.returncode)
 - All generated paths in `config.json` are absolute.
 - Logs are captured under `bin/Linux/logs` when running via `NemoSimRunner`.
 - See `README.md` for more examples and test instructions.
+- Probe metadata is stored in `probes.json` alongside `config.json`; `CompiledModel` loads it automatically for the probe API and CLI tooling.
