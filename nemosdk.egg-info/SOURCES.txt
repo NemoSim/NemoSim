@@ -4,6 +4,7 @@ nemosdk/__init__.py
 nemosdk/cli.py
 nemosdk/compiler.py
 nemosdk/model.py
+nemosdk/probe_utils.py
 nemosdk/runner.py
 nemosdk.egg-info/PKG-INFO
 nemosdk.egg-info/SOURCES.txt

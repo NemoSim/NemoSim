@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+import datetime as _dt
 import os
 import subprocess
-import datetime as _dt
+import sys
+import threading
 
 try:
     from .compiler import CompiledModel
@@ -61,6 +63,11 @@ class NemoSimRunner:
         extra_args: Optional[Sequence[str]] = None,
         logs_dir: Optional[Path] = None,
         check: bool = True,
+        timeout: Optional[float] = None,
+        env: Optional[Mapping[str, str]] = None,
+        stream_output: bool = False,
+        stdout_callback: Optional[Callable[[str], None]] = None,
+        stderr_callback: Optional[Callable[[str], None]] = None,
     ) -> RunResult:
         """Execute the simulator with the provided compiled model.
 
@@ -69,6 +76,11 @@ class NemoSimRunner:
             extra_args: Optional additional arguments appended to the command line.
             logs_dir: Directory for log files (defaults to `working_dir/logs`).
             check: If True, raises `RuntimeError` when return code is non-zero.
+            timeout: Optional timeout (seconds). When exceeded, the simulator is terminated and `TimeoutError` is raised.
+            env: Optional mapping of environment variables to provide to the simulator.
+            stream_output: When True, mirror stdout/stderr to the current process streams while still writing logs.
+            stdout_callback: Optional callable invoked with each stdout line (newline preserved) when streaming.
+            stderr_callback: Optional callable invoked with each stderr line (newline preserved) when streaming.
 
         Returns:
             RunResult with return code and log file paths.
@@ -76,6 +88,7 @@ class NemoSimRunner:
         Raises:
             FileNotFoundError: If working directory or binary doesn't exist.
             RuntimeError: If `check=True` and simulator exits with non-zero code.
+            TimeoutError: If the simulator exceeds the provided timeout.
             
         Note:
             Return codes follow standard process exit codes:
@@ -96,6 +109,9 @@ class NemoSimRunner:
         stdout_path = logs_dir / f"nemosim_stdout_{ts}.log"
         stderr_path = logs_dir / f"nemosim_stderr_{ts}.log"
 
+        mirror_stdout = stream_output or stdout_callback is not None
+        mirror_stderr = stream_output or stderr_callback is not None
+
         # Use a path to the binary that's valid after chdir into working_dir
         if Path(self.binary_path).is_absolute():
             bin_arg = str(self.binary_path)
@@ -106,14 +122,87 @@ class NemoSimRunner:
             args.extend(list(extra_args))
 
         with stdout_path.open("w", encoding="utf-8") as out_fh, stderr_path.open("w", encoding="utf-8") as err_fh:
-            proc = subprocess.run(
-                args,
-                cwd=str(self.working_dir),
-                stdout=out_fh,
-                stderr=err_fh,
-                text=True,
-                check=False,
-            )
+            if not mirror_stdout and not mirror_stderr:
+                try:
+                    proc = subprocess.run(
+                        args,
+                        cwd=str(self.working_dir),
+                        stdout=out_fh,
+                        stderr=err_fh,
+                        text=True,
+                        check=False,
+                        timeout=timeout,
+                        env=dict(env) if env is not None else None,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise TimeoutError(
+                        f"Simulator timed out after {timeout} seconds. See logs: {stdout_path}, {stderr_path}"
+                    ) from exc
+            else:
+                proc = subprocess.Popen(
+                    args,
+                    cwd=str(self.working_dir),
+                    stdout=subprocess.PIPE if mirror_stdout else out_fh,
+                    stderr=subprocess.PIPE if mirror_stderr else err_fh,
+                    text=True,
+                    env=dict(env) if env is not None else None,
+                )
+
+                threads: list[threading.Thread] = []
+
+                def _make_forwarder(
+                    stream,
+                    log_file,
+                    *,
+                    callback: Optional[Callable[[str], None]],
+                    mirror_to: Optional[Callable[[str], None]],
+                ):
+                    def _forward() -> None:
+                        try:
+                            for line in iter(stream.readline, ""):
+                                log_file.write(line)
+                                log_file.flush()
+                                if callback is not None:
+                                    callback(line)
+                                if mirror_to is not None:
+                                    mirror_to(line)
+                        finally:
+                            stream.close()
+
+                    return _forward
+
+                if mirror_stdout and proc.stdout is not None:
+                    stdout_forward = _make_forwarder(
+                        proc.stdout,
+                        out_fh,
+                        callback=stdout_callback,
+                        mirror_to=_build_mirror_fn(stream_output, sys.stdout),
+                    )
+                    threads.append(threading.Thread(target=stdout_forward, daemon=True))
+
+                if mirror_stderr and proc.stderr is not None:
+                    stderr_forward = _make_forwarder(
+                        proc.stderr,
+                        err_fh,
+                        callback=stderr_callback,
+                        mirror_to=_build_mirror_fn(stream_output, sys.stderr),
+                    )
+                    threads.append(threading.Thread(target=stderr_forward, daemon=True))
+
+                for thread in threads:
+                    thread.start()
+
+                try:
+                    proc.wait(timeout=timeout)
+                except subprocess.TimeoutExpired as exc:
+                    proc.kill()
+                    proc.wait()
+                    raise TimeoutError(
+                        f"Simulator timed out after {timeout} seconds. See logs: {stdout_path}, {stderr_path}"
+                    ) from exc
+                finally:
+                    for thread in threads:
+                        thread.join()
 
         result = RunResult(
             returncode=proc.returncode,
@@ -127,5 +216,16 @@ class NemoSimRunner:
                 f"Simulator exited with code {proc.returncode}. See logs: {stdout_path}, {stderr_path}"
             )
         return result
+
+
+def _build_mirror_fn(stream_output: bool, target_stream) -> Optional[Callable[[str], None]]:
+    if not stream_output:
+        return None
+
+    def _mirror(line: str) -> None:
+        target_stream.write(line)
+        target_stream.flush()
+
+    return _mirror
 
 

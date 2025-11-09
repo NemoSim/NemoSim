@@ -455,6 +455,51 @@ def test_probe_iter_all_spikes(tmp_path: Path):
     assert results == expected
 
 
+def test_probe_stream_signal(tmp_path: Path):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    (output_dir / "vin_0_0.txt").write_text("\n".join(str(v) for v in [0.1, 0.2, 0.3, 0.4]) + "\n")
+    (output_dir / "vin_0_1.txt").write_text("\n".join(str(v) for v in [1.1, 1.2, 1.3]) + "\n")
+
+    defaults = BIUNetworkDefaults()
+    layer = Layer(
+        size=2,
+        synapses=Synapses(rows=2, cols=1, weights=[[1.0], [1.0]]),
+        probe="probe",
+    )
+    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    probe = compiled.get_probe("probe")
+
+    streamed = list(probe.stream("vin", chunk_size=2))
+    assert streamed == [
+        (0, [0.1, 0.2]),
+        (0, [0.3, 0.4]),
+        (1, [1.1, 1.2]),
+        (1, [1.3]),
+    ]
+
+
+def test_probe_summarize_signal(tmp_path: Path):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    spikes = [0, 1, 0, 1, 1]
+    (output_dir / "spikes_0_0.txt").write_text("\n".join(str(v) for v in spikes) + "\n")
+
+    defaults = BIUNetworkDefaults()
+    layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe")
+    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    probe = compiled.get_probe("probe")
+
+    summary = probe.summarize("spikes")
+    stats = summary[0]
+    assert stats["count"] == len(spikes)
+    assert stats["min"] == 0.0
+    assert stats["max"] == 1.0
+    assert stats["sum"] == float(sum(spikes))
+    assert stats["mean"] == float(sum(spikes)) / len(spikes)
+    assert stats["spikes"] == sum(spikes)
+
+
 def test_probe_list_neuron_indices(tmp_path: Path):
     output_dir = tmp_path / "output"
     output_dir.mkdir()

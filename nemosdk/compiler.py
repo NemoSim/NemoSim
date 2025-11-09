@@ -169,6 +169,18 @@ class ProbeMetadata:
         )
 
 
+def _safe_min(current: Optional[float], value: float) -> float:
+    if current is None:
+        return value
+    return value if value < current else current
+
+
+def _safe_max(current: Optional[float], value: float) -> float:
+    if current is None:
+        return value
+    return value if value > current else current
+
+
 def _collect_probe_metadata(layers: Sequence[Layer]) -> tuple[Dict[str, int], Dict[str, ProbeMetadata]]:
     """Validate probe uniqueness and collect metadata for persistence."""
     probe_to_layer: Dict[str, int] = {}
@@ -357,6 +369,68 @@ class LayerProbe:
         for neuron_idx in self._list_neuron_indices(signal="spikes"):
             for chunk in self.iter_spikes(neuron_idx, chunk_size=chunk_size):
                 yield neuron_idx, chunk
+
+    def stream(
+        self,
+        signal: str,
+        *,
+        neurons: Optional[Sequence[int]] = None,
+        chunk_size: int = 1024,
+    ) -> Iterator[tuple[int, list[int | float]]]:
+        """Stream signal data in chunks for the specified neurons.
+
+        Yields tuples of ``(neuron_idx, chunk)``, where ``chunk`` is a list of values.
+        """
+        neuron_indices = list(neurons) if neurons is not None else self._list_neuron_indices(signal=signal)
+        for neuron_idx in neuron_indices:
+            for chunk in self._iter_signal(signal, neuron_idx, chunk_size=chunk_size):
+                yield neuron_idx, chunk
+
+    def summarize(
+        self,
+        signal: str,
+        *,
+        neurons: Optional[Sequence[int]] = None,
+        chunk_size: int = 4096,
+    ) -> dict[int, dict[str, float | int | None]]:
+        """Compute streaming summary statistics for the requested signal.
+
+        Returns a mapping of neuron index to summary statistics. Statistics include:
+        ``count``, ``min``, ``max``, ``sum``, ``mean`` and ``spikes`` (the latter only
+        for the ``spikes`` signal).
+        """
+        neuron_indices = list(neurons) if neurons is not None else self._list_neuron_indices(signal=signal)
+        results: dict[int, dict[str, float | int | None]] = {}
+
+        for neuron_idx in neuron_indices:
+            count = 0
+            total = 0.0
+            minimum: Optional[float] = None
+            maximum: Optional[float] = None
+            spike_sum: Optional[int] = 0 if signal == "spikes" else None
+
+            for chunk in self._iter_signal(signal, neuron_idx, chunk_size=chunk_size):
+                for value in chunk:
+                    as_float = float(value)
+                    count += 1
+                    total += as_float
+                    minimum = _safe_min(minimum, as_float)
+                    maximum = _safe_max(maximum, as_float)
+                    if spike_sum is not None:
+                        spike_sum += int(value)
+
+            mean = total / count if count > 0 else None
+            results[neuron_idx] = {
+                "count": count,
+                "min": minimum,
+                "max": maximum,
+                "sum": total if count > 0 else 0.0,
+                "mean": mean,
+            }
+            if spike_sum is not None:
+                results[neuron_idx]["spikes"] = spike_sum
+
+        return results
 
     # ------------------------------------------------------------------
     # DataFrame helper
