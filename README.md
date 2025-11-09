@@ -71,6 +71,15 @@ For background on the NEMO consortium and platform objectives, visit the project
 - With energy tables: `python examples/build_with_energy_tables.py`
 - With layer probes (easy data access): `python examples/build_with_probes.py`
 - With inline input samples: `python examples/build_with_inline_input.py`
+  - Provides stimulus entirely in memory (`input_data`) so no `input.txt` is needed.
+  - Emits both BIU and supervisor XML and reuses tuned defaults to guarantee spiking output.
+  - Demonstrates reading probe data right after the run to summarize activity.
+
+#### Data input options
+- `data_input_file`: point to an existing stimulus file; paths are stored as absolutes in the generated `config.json`.
+- `input_data`: supply Python iterables of samples; the SDK writes `input.txt` under `out_dir` automatically (see `examples/build_with_inline_input.py`).
+- Providing both flags raises `ValueError` to prevent accidental mismatches.
+- Either mode works with the CLI and `NemoSimRunner`; choose the one that best fits your workflow.
 - With plotting: `python examples/build_with_plotting.py`
 
 All examples define networks with the Python API, compile, and run the simulator automatically.
