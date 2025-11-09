@@ -14,6 +14,17 @@ def _make_dummy_binary(dir_path: Path) -> Path:
     return bin_path
 
 
+def _make_custom_binary(dir_path: Path, name: str, script_body: str) -> Path:
+    bin_path = dir_path / name
+    bin_path.write_text(
+        "#!/usr/bin/env bash\nset -e\n"
+        f"{script_body}\n",
+        encoding="utf-8",
+    )
+    os.chmod(bin_path, 0o755)
+    return bin_path
+
+
 def test_runner_success_captures_logs(tmp_path: Path):
     work = tmp_path / "Linux"
     work.mkdir(parents=True)
@@ -93,5 +104,50 @@ def test_runner_explicit_binary_overrides_env_var(tmp_path: Path):
         # Clean up environment variable
         os.environ.pop("NEMOSIM_BINARY", None)
 
+
+def test_runner_timeout(tmp_path: Path):
+    work = tmp_path / "Linux"
+    work.mkdir(parents=True)
+    _make_custom_binary(work, "NEMOSIM", "sleep 2")
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+
+    runner = NemoSimRunner(working_dir=work)
+    try:
+        runner.run(CompiledModel(config_path=cfg), timeout=0.1)
+        assert False, "Expected TimeoutError"
+    except TimeoutError:
+        pass
+
+
+def test_runner_stream_output(tmp_path: Path, capsys):
+    work = tmp_path / "Linux"
+    work.mkdir(parents=True)
+    _make_custom_binary(
+        work,
+        "NEMOSIM",
+        "echo 'stdout line'\necho 'stderr line' >&2",
+    )
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+
+    stdout_lines: list[str] = []
+    stderr_lines: list[str] = []
+
+    runner = NemoSimRunner(working_dir=work)
+    res = runner.run(
+        CompiledModel(config_path=cfg),
+        stream_output=True,
+        stdout_callback=stdout_lines.append,
+        stderr_callback=stderr_lines.append,
+        check=True,
+    )
+
+    assert res.returncode == 0
+    captured = capsys.readouterr()
+    assert "stdout line" in captured.out
+    assert "stderr line" in captured.err
+    assert any("stdout line" in line for line in stdout_lines)
+    assert any("stderr line" in line for line in stderr_lines)
 
 
