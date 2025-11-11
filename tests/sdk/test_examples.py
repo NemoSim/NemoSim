@@ -25,8 +25,9 @@ def _assert_any_spike(spikes: list[int]) -> None:
     assert any(value != 0 for value in spikes), "Expected at least one spike event."
 
 
+@pytest.mark.parametrize("use_supervisor_defaults", [True, False])
 @requires_simulator
-def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path) -> None:
+def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path, use_supervisor_defaults: bool) -> None:
     out_dir = tmp_path / "with_probes"
 
     defaults = BIUNetworkDefaults(
@@ -36,13 +37,17 @@ def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path) -> 
         DSBitWidth=4,
         DSClockMHz=10,
     )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
-    )
+    supervisor_defaults: BIUNetworkDefaults | None
+    if use_supervisor_defaults:
+        supervisor_defaults = BIUNetworkDefaults(
+            fclk=1e7,
+            RLeak=1e6,
+            VDD=1.2,
+            Cn=1e-12,
+            Cu=4e-15,
+        )
+    else:
+        supervisor_defaults = None
 
     layer0 = Layer(
         size=3,
@@ -100,8 +105,9 @@ def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path) -> 
     assert len(vin) == len(output_spikes)
 
 
+@pytest.mark.parametrize("use_supervisor_defaults", [True, False])
 @requires_simulator
-def test_build_with_inline_input_like_example_spikes(tmp_path: Path) -> None:
+def test_build_with_inline_input_like_example_spikes(tmp_path: Path, use_supervisor_defaults: bool) -> None:
     out_dir = tmp_path / "with_inline_input"
 
     defaults = BIUNetworkDefaults(
@@ -111,13 +117,17 @@ def test_build_with_inline_input_like_example_spikes(tmp_path: Path) -> None:
         DSBitWidth=4,
         DSClockMHz=10,
     )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
-    )
+    supervisor_defaults: BIUNetworkDefaults | None
+    if use_supervisor_defaults:
+        supervisor_defaults = BIUNetworkDefaults(
+            fclk=1e7,
+            RLeak=1e6,
+            VDD=1.2,
+            Cn=1e-12,
+            Cu=4e-15,
+        )
+    else:
+        supervisor_defaults = None
 
     layer0 = Layer(
         size=5,

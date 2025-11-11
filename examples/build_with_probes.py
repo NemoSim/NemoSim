@@ -16,6 +16,7 @@ from nemosdk.runner import NemoSimRunner
 
 
 def main() -> int:
+
     # Create a simple two-layer network with probes
     defaults = BIUNetworkDefaults(
         VTh=0.6,
@@ -23,13 +24,6 @@ def main() -> int:
         refractory=12,
         DSBitWidth=4,
         DSClockMHz=10,
-    )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
     )
     
     # Layer 0: input layer with probe "input"
@@ -75,7 +69,6 @@ def main() -> int:
         defaults=defaults,
         layers=[layer0, layer1],
         include_supervisor=True,
-        supervisor_defaults=supervisor_defaults,
         out_dir=out_dir,
         data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
     )

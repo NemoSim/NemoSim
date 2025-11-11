@@ -78,6 +78,7 @@ def plot_voltage_trace(vin_file: Path, title: str, ax: plt.Axes, max_samples: in
 
 
 def main() -> int:
+
     # Assumed parameters (no user input required)
     out_dir = Path("examples/out/with_plotting")
     sim_workdir = Path("bin/Linux")
@@ -113,22 +114,12 @@ def main() -> int:
         ),
     )
 
-    # Supervisor defaults (for energy/analog parameters)
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
-    )
-    
     # Compile and run
     print("Compiling network...")
     cfg_path = compile_model(
         defaults=defaults,
         layers=[layer0, layer1],
         include_supervisor=True,
-        supervisor_defaults=supervisor_defaults,
         out_dir=out_dir,
         data_input_file=(Path("tests/data/multi_layer_test/input.txt")).resolve(),
     )

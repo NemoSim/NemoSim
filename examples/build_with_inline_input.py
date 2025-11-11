@@ -10,6 +10,7 @@ from nemosdk.runner import NemoSimRunner
 
 def main() -> int:
     """Build and run a small network using in-memory input samples."""
+
     out_dir = Path("examples/out/with_inline_input")
     sim_workdir = Path("bin/Linux")
 
@@ -20,14 +21,6 @@ def main() -> int:
         DSBitWidth=4,
         DSClockMHz=10,
     )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
-    )
-
     # First layer has five neurons and consumes five distinct input channels.
     # Each neuron is wired to a unique column via an identity-matrix synapse.
     layer0 = Layer(
@@ -69,7 +62,6 @@ def main() -> int:
         defaults=defaults,
         layers=[layer0, layer1],
         include_supervisor=True,
-        supervisor_defaults=supervisor_defaults,
         out_dir=out_dir,
         input_data=samples,
     )
