@@ -19,10 +19,10 @@ def _compile_with_output(tmp_path: Path, layers: list[Layer], output_dir: Path) 
     model_dir.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    defaults = BIUNetworkDefaults()
     input_file = tmp_path / "input.txt"
     input_file.write_text("0\n")
 
+    defaults = BIUNetworkDefaults()
     compiled = compile_model(
         defaults=defaults,
         layers=layers,

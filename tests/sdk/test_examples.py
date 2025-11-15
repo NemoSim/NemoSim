@@ -36,13 +36,6 @@ def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path) -> 
         DSBitWidth=4,
         DSClockMHz=10,
     )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
-    )
 
     layer0 = Layer(
         size=3,
@@ -81,7 +74,6 @@ def test_build_with_probes_like_example_generates_probe_data(tmp_path: Path) -> 
         defaults=defaults,
         layers=[layer0, layer1],
         include_supervisor=True,
-        supervisor_defaults=supervisor_defaults,
         out_dir=out_dir,
         data_input_file=data_input_file,
     )
@@ -110,13 +102,6 @@ def test_build_with_inline_input_like_example_spikes(tmp_path: Path) -> None:
         refractory=12,
         DSBitWidth=4,
         DSClockMHz=10,
-    )
-    supervisor_defaults = BIUNetworkDefaults(
-        fclk=1e7,
-        RLeak=1e6,
-        VDD=1.2,
-        Cn=1e-12,
-        Cu=4e-15,
     )
 
     layer0 = Layer(
@@ -152,7 +137,6 @@ def test_build_with_inline_input_like_example_spikes(tmp_path: Path) -> None:
         defaults=defaults,
         layers=[layer0, layer1],
         include_supervisor=True,
-        supervisor_defaults=supervisor_defaults,
         out_dir=out_dir,
         input_data=samples,
     )

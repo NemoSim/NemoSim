@@ -27,6 +27,8 @@ For background on the NEMO consortium and platform objectives, visit the project
   - `NeuronOverride(index, VTh=?, RLeak=?, refractory=?)`
 - Build & run helpers
   - `compile(defaults, layers, include_supervisor=False)` → compile
+    - `defaults`: user-configurable `BIUNetworkDefaults` for the main network
+    - `include_supervisor`: if `True`, emits supervisor XML with hard-coded defaults
   - `build_run_config(...)` → internal runner config (usually used via examples/CLI)
   - `NemoSimRunner(working_dir).run(config_json_path)` → executes the simulator and captures logs
   - `write_input_data(path, iterable)` → convenience writer for simulator stimulus files
@@ -45,6 +47,7 @@ For background on the NEMO consortium and platform objectives, visit the project
 
 ### 🧩 Concepts (SDK view)
 - Global defaults: set once in `BIUNetworkDefaults` (e.g., `VTh`, `RLeak`, `refractory`, DS settings).
+  - **Note**: Supervisor defaults (used when `include_supervisor=True`) are hard-coded and not user-configurable.
 - Layers: specify `size` and a `Synapses(rows, cols, weights)` matrix for incoming connections.
 - Per‑neuron overrides inside a layer:
   - `NeuronOverrideRange(start, end, ...)` applies to an inclusive index range
@@ -72,7 +75,7 @@ For background on the NEMO consortium and platform objectives, visit the project
 - With layer probes (easy data access): `python examples/build_with_probes.py`
 - With inline input samples: `python examples/build_with_inline_input.py`
   - Provides stimulus entirely in memory (`input_data`) so no `input.txt` is needed.
-  - Emits both BIU and supervisor XML and reuses tuned defaults to guarantee spiking output.
+  - Emits both BIU and supervisor XML (supervisor defaults are hard-coded).
   - Demonstrates reading probe data right after the run to summarize activity.
 
 #### Data input options
@@ -203,7 +206,7 @@ Artifacts are written under `examples/out/...` and paths are relativized to `bin
   1. Explicit `binary_path` parameter (if provided)
   2. `NEMOSIM_BINARY` environment variable (if set)
   3. Default: `working_dir / "NEMOSIM"`
-- Logs are captured under `bin/Linux/logs`
+- Logs are captured under `bin/Linux/logs` (automatically ignored by git)
 
 **Example: Using environment variable to override binary path:**
 ```bash
