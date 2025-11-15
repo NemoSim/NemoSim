@@ -13,6 +13,15 @@ from .model import (
     materialize_precedence,
 )
 
+# Hard-coded supervisor defaults - no longer user-configurable
+_DEFAULT_SUPERVISOR_DEFAULTS = BIUNetworkDefaults(
+    fclk=1e7,
+    RLeak=1e6,
+    VDD=1.2,
+    Cn=1e-12,
+    Cu=4e-15,
+)
+
 
 def _append_text(parent: ET.Element, tag: str, text: str) -> ET.Element:
     """Create a child element under `parent` with stringified text content."""
@@ -25,7 +34,6 @@ def compile_to_xml(
     defaults: BIUNetworkDefaults,
     layers: list[Layer],
     include_supervisor: bool = False,
-    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
 ) -> tuple[str, Optional[str]]:
     """Produce XML strings for a BIU network and an optional supervisor file.
 
@@ -37,8 +45,6 @@ def compile_to_xml(
         Ordered list of layers to emit under `<Architecture>`.
     include_supervisor
         Whether to also emit a separate supervisor XML string.
-    supervisor_defaults
-        Optional defaults used when emitting the supervisor XML.
 
     Returns
     -------
@@ -128,7 +134,7 @@ def compile_to_xml(
     if include_supervisor:
         sup_root = ET.Element("NetworkConfig", {"type": "BIUNetwork"})
         sup_biu = ET.SubElement(sup_root, "BIUNetwork")
-        sdef = supervisor_defaults or BIUNetworkDefaults()
+        sdef = _DEFAULT_SUPERVISOR_DEFAULTS
         # Only analog-ish defaults are typical in supervisor examples
         if sdef.fclk is not None:
             _append_text(sup_biu, "fclk", sdef.fclk)
@@ -211,7 +217,6 @@ def compile(
     defaults: BIUNetworkDefaults,
     layers: list[Layer],
     include_supervisor: bool = False,
-    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
     *,
     # Optional artifact writing in one step for a 2-line compile→run flow
     out_dir: Optional[Path] = None,
@@ -240,7 +245,6 @@ def compile(
         defaults=defaults,
         layers=layers,
         include_supervisor=include_supervisor,
-        supervisor_defaults=supervisor_defaults,
     )
     if out_dir is None:
         return biu_xml, sup_xml
@@ -760,7 +764,6 @@ def compile_and_write(
     data_input_file: Optional[Path] = None,
     input_data: Optional[Iterable[int | float]] = None,
     include_supervisor: bool = False,
-    supervisor_defaults: Optional[BIUNetworkDefaults] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> dict:
@@ -778,7 +781,6 @@ def compile_and_write(
         defaults=defaults,
         layers=layers,
         include_supervisor=include_supervisor,
-        supervisor_defaults=supervisor_defaults,
     )
     biu_xml_path = out_dir / "biu.xml"
     write_text(biu_xml_path, biu_xml)

@@ -47,7 +47,6 @@ def _compile_with_output(
     tmp_path: Path,
     layers: list[Layer],
     *,
-    defaults: BIUNetworkDefaults,
     output_dir: Path,
 ) -> CompiledModel:
     """Compile layers with probes and rewrite config to point to `output_dir`."""
@@ -58,6 +57,7 @@ def _compile_with_output(
     input_file = tmp_path / "input.txt"
     input_file.write_text("0\n")
 
+    defaults = BIUNetworkDefaults()
     compiled = compile_model(
         defaults=defaults,
         layers=layers,
@@ -93,7 +93,6 @@ def test_probe_spikes_matches_file(tmp_path: Path):
         spike_file.write_text("\n".join(str(s) for s in spikes) + "\n")
     
     # Create model with probe
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=3,
         synapses=Synapses(rows=3, cols=2, weights=[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
@@ -103,7 +102,6 @@ def test_probe_spikes_matches_file(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -140,7 +138,6 @@ def test_probe_vin_matches_file(tmp_path: Path):
         vin_file.write_text("\n".join(str(v) for v in values) + "\n")
     
     # Create model with probe for layer 1
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=2,
         synapses=Synapses(rows=2, cols=1, weights=[[1.0], [2.0]]),
@@ -154,7 +151,6 @@ def test_probe_vin_matches_file(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0, layer1],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -194,7 +190,6 @@ def test_probe_vns_matches_file(tmp_path: Path):
         vns_file.write_text("\n".join(str(v) for v in values) + "\n")
     
     # Create model with probe
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=2,
         synapses=Synapses(rows=2, cols=1, weights=[[1.0], [2.0]]),
@@ -204,7 +199,6 @@ def test_probe_vns_matches_file(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -242,7 +236,6 @@ def test_probe_get_all_matches_files(tmp_path: Path):
             filepath.write_text("\n".join(str(v) for v in values) + "\n")
     
     # Create model with probe
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=3,
         synapses=Synapses(rows=3, cols=1, weights=[[1.0], [2.0], [3.0]]),
@@ -252,7 +245,6 @@ def test_probe_get_all_matches_files(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -286,7 +278,6 @@ def test_probe_missing_file_raises_error(tmp_path: Path):
     output_dir.mkdir()
     
     # Create model with probe
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=1,
         synapses=Synapses(rows=1, cols=1, weights=[[1.0]]),
@@ -296,7 +287,6 @@ def test_probe_missing_file_raises_error(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -328,7 +318,6 @@ def test_probe_invalid_name_raises_keyerror(tmp_path: Path):
     output_dir.mkdir()
     
     # Create model with probe
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=1,
         synapses=Synapses(rows=1, cols=1, weights=[[1.0]]),
@@ -338,7 +327,6 @@ def test_probe_invalid_name_raises_keyerror(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0],
-        defaults=defaults,
         output_dir=output_dir,
     )
 
@@ -354,7 +342,6 @@ def test_probe_invalid_name_raises_keyerror(tmp_path: Path):
 def test_probe_list_probes(tmp_path: Path):
     """Test that list_probes() returns all available probe names."""
     # Create model with multiple probes
-    defaults = BIUNetworkDefaults(VTh=0.6, RLeak=500e6, refractory=12, DSBitWidth=4, DSClockMHz=10)
     layer0 = Layer(
         size=1,
         synapses=Synapses(rows=1, cols=1, weights=[[1.0]]),
@@ -374,7 +361,6 @@ def test_probe_list_probes(tmp_path: Path):
     compiled = _compile_with_output(
         tmp_path,
         [layer0, layer1, layer2],
-        defaults=defaults,
         output_dir=tmp_path / "output_list",
     )
 
@@ -393,9 +379,8 @@ def test_probe_to_dataframe_with_stub_pandas(tmp_path: Path):
     (output_dir / "spikes_0_0.txt").write_text("\n".join(str(v) for v in spikes) + "\n")
     (output_dir / "vin_0_0.txt").write_text("\n".join(str(v) for v in vin) + "\n")
 
-    defaults = BIUNetworkDefaults(VTh=0.5, RLeak=400e6, refractory=10, DSBitWidth=4, DSClockMHz=10)
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe0")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer], output_dir=output_dir)
     probe = compiled.get_probe("probe0")
 
     fake_pd = types.ModuleType("pandas")
@@ -421,9 +406,8 @@ def test_probe_iter_spikes_chunks(tmp_path: Path):
     values = [0, 1, 0, 0, 1, 0, 1, 0, 0, 0]
     (output_dir / "spikes_0_0.txt").write_text("\n".join(str(v) for v in values) + "\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
 
     chunks = list(probe.iter_spikes(0, chunk_size=4))
@@ -440,9 +424,8 @@ def test_probe_iter_all_spikes(tmp_path: Path):
     for (layer_idx, neuron_idx), seq in data.items():
         (output_dir / f"spikes_{layer_idx}_{neuron_idx}.txt").write_text("\n".join(str(v) for v in seq) + "\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=2, synapses=Synapses(rows=2, cols=1, weights=[[1.0], [1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
 
     results = list(probe.iter_all_spikes(chunk_size=3))
@@ -461,13 +444,12 @@ def test_probe_stream_signal(tmp_path: Path):
     (output_dir / "vin_0_0.txt").write_text("\n".join(str(v) for v in [0.1, 0.2, 0.3, 0.4]) + "\n")
     (output_dir / "vin_0_1.txt").write_text("\n".join(str(v) for v in [1.1, 1.2, 1.3]) + "\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(
         size=2,
         synapses=Synapses(rows=2, cols=1, weights=[[1.0], [1.0]]),
         probe="probe",
     )
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
 
     streamed = list(probe.stream("vin", chunk_size=2))
@@ -485,9 +467,8 @@ def test_probe_summarize_signal(tmp_path: Path):
     spikes = [0, 1, 0, 1, 1]
     (output_dir / "spikes_0_0.txt").write_text("\n".join(str(v) for v in spikes) + "\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
 
     summary = probe.summarize("spikes")
@@ -506,9 +487,8 @@ def test_probe_list_neuron_indices(tmp_path: Path):
     for neuron_idx in range(3):
         (output_dir / f"spikes_0_{neuron_idx}.txt").write_text("0\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=3, synapses=Synapses(rows=3, cols=1, weights=[[1.0], [1.0], [1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
     assert probe.list_neuron_indices() == [0, 1, 2]
 
@@ -534,9 +514,8 @@ def test_probes_json_written(tmp_path: Path):
 
 def test_compiled_model_reads_probe_metadata_from_disk(tmp_path: Path):
     output_dir = tmp_path / "output"
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer], output_dir=output_dir)
 
     fresh = CompiledModel(config_path=compiled.get_config_path())
     assert fresh.list_probes() == ["probe"]
@@ -551,9 +530,8 @@ def test_watch_probe_follow(tmp_path: Path):
     file_path = output_dir / "spikes_0_0.txt"
     file_path.write_text("0\n")
 
-    defaults = BIUNetworkDefaults()
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]), probe="probe")
-    compiled = _compile_with_output(tmp_path, [layer], defaults=defaults, output_dir=output_dir)
+    compiled = _compile_with_output(tmp_path, [layer],  output_dir=output_dir)
     probe = compiled.get_probe("probe")
 
     def writer():

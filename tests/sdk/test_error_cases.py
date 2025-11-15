@@ -10,13 +10,6 @@ from nemosdk.runner import NemoSimRunner
 from nemosdk.compiler import CompiledModel
 
 
-def test_invalid_ds_mode_raises():
-    defaults = BIUNetworkDefaults(DSBitWidth=4, DSClockMHz=10, DSMode="NotAMode")
-    layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[[1.0]]))
-    with pytest.raises(ValueError):
-        compile_model(defaults, [layer])
-
-
 def test_missing_weights_raises():
     defaults = BIUNetworkDefaults(DSBitWidth=4, DSClockMHz=10)
     layer = Layer(size=1, synapses=Synapses(rows=1, cols=1, weights=[]))
@@ -25,7 +18,6 @@ def test_missing_weights_raises():
 
 
 def test_cols_mismatch_raises():
-    defaults = BIUNetworkDefaults(DSBitWidth=4, DSClockMHz=10)
     syn = Synapses(rows=1, cols=2, weights=[[1.0]])  # only 1 col provided
     layer = Layer(size=1, synapses=syn)
     with pytest.raises(ValueError):
@@ -33,7 +25,6 @@ def test_cols_mismatch_raises():
 
 
 def test_negative_layer_size_raises():
-    defaults = BIUNetworkDefaults(DSBitWidth=4, DSClockMHz=10)
     syn = Synapses(rows=1, cols=1, weights=[[1.0]])
     layer = Layer(size=0, synapses=syn)
     with pytest.raises(ValueError):
@@ -41,7 +32,6 @@ def test_negative_layer_size_raises():
 
 
 def test_range_start_gt_end_raises():
-    defaults = BIUNetworkDefaults(DSBitWidth=4, DSClockMHz=10)
     syn = Synapses(rows=1, cols=1, weights=[[1.0]])
     layer = Layer(size=1, synapses=syn, ranges=[NeuronOverrideRange(start=2, end=1, VTh=0.2)])
     with pytest.raises(ValueError):

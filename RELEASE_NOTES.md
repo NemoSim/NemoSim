@@ -1,5 +1,51 @@
 ## NemoSim / NemoSDK Release Notes
 
+### v0.2.2 (Alpha) — 2025-11-15
+
+Status: Alpha. Supervisor defaults are now hard-coded; main network defaults remain user-configurable.
+
+#### Changed
+- **Supervisor defaults are now hard-coded**: The `supervisor_defaults` parameter has been removed from all compile functions
+  - Supervisor XML now always uses hard-coded defaults: `fclk=1e7`, `RLeak=1e6`, `VDD=1.2`, `Cn=1e-12`, `Cu=4e-15`
+  - Main `BIUNetworkDefaults` remain fully user-configurable
+  - This simplifies the API and ensures consistent supervisor configuration across all models
+- Updated all examples to remove `supervisor_defaults` parameter usage
+- Updated CLI: removed supervisor defaults arguments (main defaults arguments remain)
+- Updated documentation (README.md) to clarify supervisor defaults are hard-coded
+
+#### Removed
+- `supervisor_defaults` parameter from `compile_to_xml()`, `compile()`, and `compile_and_write()` functions
+- Supervisor defaults CLI arguments (main defaults CLI arguments remain available)
+
+#### Repository Hygiene
+- Updated `.gitignore` to ignore all log files (`*.log` and `**/logs/` patterns)
+- Removed all existing log files from the repository
+
+#### Migration Guide
+If you were using `supervisor_defaults`:
+```python
+# Before (v0.2.1)
+compiled = compile(
+    defaults=defaults,
+    layers=layers,
+    include_supervisor=True,
+    supervisor_defaults=supervisor_defaults,  # ❌ No longer supported
+)
+
+# After (v0.2.2)
+compiled = compile(
+    defaults=defaults,  # ✅ Main defaults still configurable
+    layers=layers,
+    include_supervisor=True,  # ✅ Supervisor uses hard-coded defaults
+)
+```
+
+#### Notes
+- This is a **breaking change** for code that explicitly set `supervisor_defaults`
+- Main network defaults (`BIUNetworkDefaults`) are unaffected and remain fully configurable
+- All examples and tests have been updated to reflect this change
+- Supervisor defaults are optimized for typical use cases and cannot be customized
+
 ### v0.2.1 (Alpha) — 2025-11-09
 
 Status: Alpha. Example improvements to guarantee spiking activity and added regression tests.

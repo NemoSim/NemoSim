@@ -12,3 +12,5 @@
 
 # Ignore simulator logs
 /bin/Linux/logs/
+*.log
+**/logs/
