@@ -103,7 +103,7 @@ class NemoSimRunner:
         if not self.binary_path.is_file():
             raise FileNotFoundError(f"Simulator binary is not a file: {self.binary_path}")
 
-        ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+        ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         logs_dir = logs_dir or (self.working_dir / "logs")
         logs_dir.mkdir(parents=True, exist_ok=True)
         stdout_path = logs_dir / f"nemosim_stdout_{ts}.log"
@@ -227,5 +227,4 @@ def _build_mirror_fn(stream_output: bool, target_stream) -> Optional[Callable[[s
         target_stream.flush()
 
     return _mirror
-
 

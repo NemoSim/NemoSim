@@ -1,0 +1,6 @@
+{
+  "output_directory": "/home/avi/projects/NemoSim/examples/out/multiple_simulations/input_4.0/output",
+  "xml_config_path": "/home/avi/projects/NemoSim/examples/out/multiple_simulations/input_4.0/biu.xml",
+  "data_input_file": "/home/avi/projects/NemoSim/examples/out/multiple_simulations/input_4.0/input.txt",
+  "sup_xml_config_path": "/home/avi/projects/NemoSim/examples/out/multiple_simulations/input_4.0/supervisor.xml"
+}

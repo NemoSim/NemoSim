@@ -22,6 +22,10 @@ _DEFAULT_SUPERVISOR_DEFAULTS = BIUNetworkDefaults(
     Cu=4e-15,
 )
 
+Number = Union[int, float]
+InputSample = Union[Number, Iterable[Number], str, bytes]
+InputData = Iterable[InputSample]
+
 
 def _append_text(parent: ET.Element, tag: str, text: str) -> ET.Element:
     """Create a child element under `parent` with stringified text content."""
@@ -221,7 +225,7 @@ def compile(
     # Optional artifact writing in one step for a 2-line compile→run flow
     out_dir: Optional[Path] = None,
     data_input_file: Optional[Path] = None,
-    input_data: Optional[Iterable[int | float]] = None,
+    input_data: Optional[InputData] = None,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
 ) -> Union[tuple[str, Optional[str]], "CompiledModel"]:
@@ -716,27 +720,30 @@ def build_run_config(
     return cfg
 
 
-Number = Union[int, float]
-
-
-def write_input_data(path: Path, data: Iterable[Union[Number, Iterable[Number]]]) -> None:
+def write_input_data(path: Path, data: InputData) -> None:
     """Write input samples to ``path``.
 
     Each entry can be:
       - a single numeric value -> written as one value per line.
       - an iterable of numeric values -> written space-separated on a single line.
+      - a preformatted ``str``/``bytes`` line (newline trimming is handled automatically).
     """
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
+
+    def _normalize(sample: InputSample) -> bytes:
+        if isinstance(sample, bytes):
+            return sample.rstrip(b"\n") + b"\n"
+        if isinstance(sample, str):
+            return sample.rstrip("\n").encode("utf-8") + b"\n"
+        if isinstance(sample, IterableABC) and not isinstance(sample, (int, float)):
+            line = " ".join(str(v) for v in sample)
+            return line.encode("utf-8") + b"\n"
+        return f"{sample}\n".encode("utf-8")
+
+    with path.open("wb") as fh:
         for value in data:
-            if isinstance(value, (str, bytes)):
-                fh.write(value.rstrip("\n") + "\n")
-            elif isinstance(value, IterableABC) and not isinstance(value, (int, float)):
-                line = " ".join(str(v) for v in value)
-                fh.write(f"{line}\n")
-            else:
-                fh.write(f"{value}\n")
+            fh.write(_normalize(value))
 
 
 def write_text(path: Path, content: str) -> None:
@@ -762,7 +769,7 @@ def compile_and_write(
     layers: list[Layer],
     out_dir: Path,
     data_input_file: Optional[Path] = None,
-    input_data: Optional[Iterable[int | float]] = None,
+    input_data: Optional[InputData] = None,
     include_supervisor: bool = False,
     synapses_energy_table_path: Optional[Path] = None,
     neuron_energy_table_path: Optional[Path] = None,
@@ -815,5 +822,3 @@ def compile_and_write(
             },
         )
     return cfg
-
-

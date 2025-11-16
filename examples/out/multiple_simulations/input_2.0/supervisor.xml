@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<NetworkConfig type="BIUNetwork"><BIUNetwork><fclk>10000000.0</fclk><RLeak>1000000.0</RLeak><VDD>1.2</VDD><Cn>1e-12</Cn><Cu>4e-15</Cu></BIUNetwork></NetworkConfig>

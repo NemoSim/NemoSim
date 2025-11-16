@@ -151,3 +151,19 @@ def test_runner_stream_output(tmp_path: Path, capsys):
     assert any("stderr line" in line for line in stderr_lines)
 
 
+def test_runner_log_files_unique(tmp_path: Path):
+    work = tmp_path / "Linux"
+    work.mkdir(parents=True)
+    _make_dummy_binary(work)
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+
+    runner = NemoSimRunner(working_dir=work)
+    compiled = CompiledModel(config_path=cfg)
+
+    res1 = runner.run(compiled, check=True)
+    res2 = runner.run(compiled, check=True)
+
+    assert res1.stdout_path != res2.stdout_path
+    assert res1.stderr_path != res2.stderr_path
+
