@@ -12,8 +12,10 @@ import threading
 import time
 import types
 
+import pytest
+
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses
-from nemosdk.compiler import compile as compile_model, CompiledModel
+from nemosdk.compiler import compile as compile_model, CompiledModel, LayerProbe
 from nemosdk.probe_utils import watch_probe
 
 
@@ -400,6 +402,53 @@ def test_probe_to_dataframe_with_stub_pandas(tmp_path: Path):
             sys.modules.pop("pandas", None)
 
 
+def test_watch_probe_waits_for_file(tmp_path: Path):
+    output_dir = tmp_path / "output_wait"
+    output_dir.mkdir()
+    probe = LayerProbe(layer_idx=0, output_dir=output_dir)
+    target = output_dir / "spikes_0_0.txt"
+
+    def writer() -> None:
+        time.sleep(0.05)
+        target.write_text("1\n", encoding="utf-8")
+
+    thread = threading.Thread(target=writer)
+    thread.start()
+    try:
+        iterator = watch_probe(
+            probe,
+            "spikes",
+            0,
+            follow=False,
+            poll_interval=0.01,
+            max_events=1,
+            wait_for_file=True,
+            wait_timeout=1.0,
+        )
+        values = list(iterator)
+        assert values == [1]
+    finally:
+        thread.join()
+
+
+def test_watch_probe_wait_timeout(tmp_path: Path):
+    output_dir = tmp_path / "output_wait_timeout"
+    output_dir.mkdir()
+    probe = LayerProbe(layer_idx=0, output_dir=output_dir)
+
+    iterator = watch_probe(
+        probe,
+        "spikes",
+        0,
+        follow=True,
+        poll_interval=0.01,
+        wait_for_file=True,
+        wait_timeout=0.05,
+    )
+    with pytest.raises(TimeoutError):
+        next(iterator)
+
+
 def test_probe_iter_spikes_chunks(tmp_path: Path):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
@@ -556,4 +605,3 @@ def test_watch_probe_follow(tmp_path: Path):
         thread.join()
 
     assert values == [0, 1, 2]
-

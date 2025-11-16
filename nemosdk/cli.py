@@ -9,6 +9,7 @@ Subcommands:
 """
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -16,6 +17,17 @@ from .compiler import compile as compile_model, build_run_config, write_text, wr
 from .model import BIUNetworkDefaults, Layer, Synapses
 from .runner import NemoSimRunner
 from .probe_utils import watch_probe
+
+
+def _relativize_paths(cfg: dict[str, str], base: Path) -> dict[str, str]:
+    """Return a copy of ``cfg`` with non-empty paths relative to ``base``."""
+    rel: dict[str, str] = {}
+    for key, value in cfg.items():
+        if not value:
+            rel[key] = value
+            continue
+        rel[key] = os.path.relpath(value, start=base)
+    return rel
 
 
 def _write_artifacts(args: argparse.Namespace) -> None:
@@ -55,6 +67,11 @@ def _write_artifacts(args: argparse.Namespace) -> None:
         synapses_energy_table_path=Path(args.syn_energy) if args.syn_energy else None,
         neuron_energy_table_path=Path(args.neu_energy) if args.neu_energy else None,
     )
+    if args.sim_workdir:
+        base = Path(args.sim_workdir).resolve()
+        if not base.exists():
+            raise FileNotFoundError(f"--sim-workdir path does not exist: {base}")
+        cfg = _relativize_paths(cfg, base)
     write_json(out_dir / "config.json", cfg)
 
 
@@ -168,7 +185,10 @@ def main(argv: list[str] | None = None) -> int:
     b = sub.add_parser("build", help="Compile minimal network and write artifacts")
     b.add_argument("output_dir", help="Directory to write artifacts")
     b.add_argument("data_input_file", help="Path to input.txt or similar data file")
-    b.add_argument("--sim-workdir", help="Simulator working dir (e.g., bin/Linux)")
+    b.add_argument(
+        "--sim-workdir",
+        help="Simulator working dir (e.g., bin/Linux); emits config paths relative to this directory",
+    )
     b.add_argument("--include-supervisor", action="store_true", help="Emit supervisor.xml as well")
     b.add_argument("--weight", type=float, default=7.0)
     b.add_argument("--vth", type=float)
@@ -230,5 +250,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

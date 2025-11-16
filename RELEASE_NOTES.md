@@ -1,5 +1,22 @@
 ## NemoSim / NemoSDK Release Notes
 
+### v0.2.3 (Alpha) — 2025-11-22
+
+Status: Alpha. UX polish release focused on CLI ergonomics, probe tooling, and packaging robustness.
+
+#### Added
+- `watch_probe` now supports tailing files that are created after the call begins via `wait_for_file=True`, with optional timeouts for automation-friendly streaming.
+- New regression tests cover the packaging metadata, CLI relative-path behavior, bytes input writing, runner log uniqueness, and the enhanced probe utilities.
+
+#### Changed
+- `pyproject.toml` now references the real `README.md` to unblock `pip install` and source builds; a packaging test ensures the file exists going forward.
+- `write_input_data` accepts iterables of scalars, nested iterables, `str`, or `bytes`, normalizing newline handling while writing in binary mode; type hints mirror the broader contract.
+- `nemosdk cli build --sim-workdir` now rewrites emitted config paths relative to the simulator directory, simplifying artifact portability.
+- `NemoSimRunner` log filenames include microseconds to prevent collisions when runs start in the same second.
+
+#### Testing
+- Expanded SDK test suite (55 total) now exercises the new behaviors, guarding regressions in CLI builds, probes, runner logs, packaging metadata, and input writers.
+
 ### v0.2.2 (Alpha) — 2025-11-15
 
 Status: Alpha. Supervisor defaults are now hard-coded; main network defaults remain user-configurable.
@@ -183,5 +200,4 @@ Status: Alpha. Linux-only. Public APIs may change.
 - BIU/DS XML and config details: `docs/BIUNetwork_Configuration.md`
 - What’s New (source details): `docs/WhatsNew.txt`
 - Examples: `examples/`
-
 

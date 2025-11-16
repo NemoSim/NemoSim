@@ -6,7 +6,7 @@ import json
 import pytest
 
 from nemosdk.model import BIUNetworkDefaults, Layer, Synapses, NeuronOverride, NeuronOverrideRange
-from nemosdk.compiler import compile as compile_model, build_run_config, compile_and_write
+from nemosdk.compiler import compile as compile_model, build_run_config, compile_and_write, write_input_data
 
 
 def test_compile_minimal_xml_roundtrip(tmp_path: Path):
@@ -158,4 +158,22 @@ def test_compile_input_multi_column(tmp_path: Path):
     lines = input_path.read_text().strip().splitlines()
     assert lines == ["1 2", "3 4", "5 6"]
 
+
+def test_write_input_data_supports_bytes(tmp_path: Path):
+    path = tmp_path / "input.txt"
+    write_input_data(
+        path,
+        data=[
+            b"0 1 2\n",
+            "3 4 5\n",
+            (6, 7, 8),
+            9,
+        ],
+    )
+    assert path.read_text().splitlines() == [
+        "0 1 2",
+        "3 4 5",
+        "6 7 8",
+        "9",
+    ]
 
